@@ -28,7 +28,7 @@ const int NUM_POINTS = 40;
 
 int main() {
     for (int i = 0; i < NUM_POINTS; i++) {
-        sensors.push_back(Point(randfloat(-5, 5), randfloat(-5, 5)));
+        sensors.push_back(Sensor(randfloat(-5, 5), randfloat(-5, 5)));
     }
     
     for (Sensor &s : sensors) {
