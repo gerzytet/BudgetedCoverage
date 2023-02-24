@@ -8,7 +8,7 @@ struct Sensor
 {
     double x, y;
     
-    Sensor(double x, double y): x(x), y(y) 
+    Sensor(double x, double y): x(x), y(y)
     {
         
     }
@@ -32,8 +32,7 @@ vector<Sensor> sensors;
 const int NUM_POINTS = 40;
 
 int main() {
-    for (int i = 0; i < NUM_POINTS; i++)
-    {
+    for (int i = 0; i < NUM_POINTS; i++){
         sensors.push_back(Sensor(randfloat(-5, 5), randfloat(-5, 5)));
     }
     
