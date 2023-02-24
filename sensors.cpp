@@ -1,6 +1,8 @@
 #include <iostream>
 #include <random>
 #include <iomanip>
+#include <fstream>
+#include <set>
 
 using namespace std;
 
@@ -28,9 +30,26 @@ double randfloat(double a, double b)
 
 vector<Sensor> sensors;
 const int NUM_POINTS = 40;
+const int R = 20;
+
+set<int> chooseSensorsRandomly(int amount) {
+    set<int> chosen;
+    for (int i = 0; i < amount; i++) {
+        int index = randint(0, NUM_POINTS - 1);
+        while (chosen.count(index) != 0) {
+            index = randint(0, NUM_POINTS - 1);
+        }
+        chosen.insert(index);
+    }
+    return chosen;
+}
 
 int main() 
 {
+    //NO COUT
+    ofstream output;
+    output.open ("output.txt", ofstream::out | ofstream::trunc); //truncate (erase) previous contents of the output file
+    output << "Sensors:\n";
     for (int i = 0; i < NUM_POINTS; i++)
     {
         sensors.push_back(Sensor(randint(0, 100), randint(0, 100)));
@@ -38,6 +57,16 @@ int main()
     
     for (Sensor &s : sensors)
     {
-        cout << setprecision(5) << '(' << s.x << ", " << s.y << ")\n";
+        output << '(' << s.x << ", " << s.y << ")\n";
     }
+
+    output << endl;
+
+    output << "Chosen:\n";
+    for (int index : chooseSensorsRandomly(10)) {
+        output << index << '\n';
+    }
+
+    output << "R:\n";
+    output << R << '\n';
 }
