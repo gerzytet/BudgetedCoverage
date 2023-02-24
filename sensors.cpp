@@ -67,6 +67,8 @@ int main()
         output << index << '\n';
     }
 
+    output << endl;
+
     output << "R:\n";
     output << R << '\n';
 }
