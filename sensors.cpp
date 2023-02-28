@@ -35,6 +35,7 @@ double randfloat(double a, double b)
 vector<Sensor> sensors;
 const int NUM_POINTS = 40;
 const int R = 20;
+const int budget = 10000;
 
 set<int> chooseSensorsRandomly(int amount) {
     set<int> chosen;
