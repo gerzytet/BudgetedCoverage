@@ -38,11 +38,14 @@ const int NUM_POINTS = 40;
 const int R = 20;
 const int budget = 10000;
 
-set<int> chooseSensorsRandomly(int amount) {
+set<int> chooseSensorsRandomly(int amount) 
+{
     set<int> chosen;
-    for (int i = 0; i < amount; i++) {
+    for (int i = 0; i < amount; i++) 
+    {
         int index = randint(0, NUM_POINTS - 1);
-        while (chosen.count(index) != 0) {
+        while (chosen.count(index) != 0) 
+        {
             index = randint(0, NUM_POINTS - 1);
         }
         chosen.insert(index);
