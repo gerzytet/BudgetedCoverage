@@ -14,8 +14,9 @@ using namespace std;
 struct Sensor 
 {
     int x, y;
+    int cost;
     
-    Sensor(int x, int y): x(x), y(y) {} //Short for this.x = x this.y = y    
+    Sensor(int x, int y): x(x), y(y), cost(cost) {} // Short for this.x = x this.y = y this.cost=cost   
 };
 
 minstd_rand randomGenerator(1);
@@ -57,7 +58,7 @@ int main()
     output << "Sensors:\n";
     for (int i = 0; i < NUM_POINTS; i++)
     {
-        sensors.push_back(Sensor(randint(0, 100), randint(0, 100)));
+        sensors.push_back(Sensor(randint(0, 100), randint(0, 100), randint(0, 100)));
     }
     
     for (Sensor &s : sensors)
