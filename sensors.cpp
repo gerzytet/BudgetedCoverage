@@ -15,8 +15,9 @@ struct Sensor
 {
     int x, y;
     int cost;
+    int coverage; //the number of other sensors within the current circle
     
-    Sensor(int x, int y, int cost): x(x), y(y), cost(cost) {} // Short for this.x = x this.y = y this.cost=cost   
+    Sensor(int x, int y, int cost): x(x), y(y), cost(cost), coverage(0) {} // Short for this.x = x this.y = y this.cost=cost   
 };
 
 minstd_rand randomGenerator(1);
