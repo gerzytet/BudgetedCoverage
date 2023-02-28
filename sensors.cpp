@@ -72,7 +72,8 @@ int main()
     output << endl;
 
     output << "Chosen:\n";
-    for (int index : chooseSensorsRandomly(10)) {
+    for (int index : chooseSensorsRandomly(10)) 
+    {
         output << index << '\n';
     }
 
