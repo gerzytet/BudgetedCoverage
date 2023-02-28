@@ -3,6 +3,7 @@
 #include <iomanip>
 #include <fstream>
 #include <set>
+#include <cmath>
 
 using namespace std;
 
@@ -52,6 +53,29 @@ set<int> chooseSensorsRandomly(int amount)
         chosen.insert(index);
     }
     return chosen;
+}
+
+double calculateDistance(Sensor s1, Sensor s2)
+{
+    return sqrt( pow(s2.x - s1.x, 2) + pow(s2.y - s1.y, 2) );
+}
+
+
+void calculateCoverage()
+{
+    for(int i = 0; i < sensors.size(); i++)
+    {
+        for(int j = 0; j < sensors.size(); j++)
+        {
+            if(i==j) //Don't count coverage for the sensor itself
+            continue;
+
+            if(calculateDistance(sensors[i], sensors[j]) < R)
+            {
+                sensors[i].coverage++;
+            }
+        }
+    }
 }
 
 int main() 
