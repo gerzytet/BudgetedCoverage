@@ -6,6 +6,10 @@
 
 using namespace std;
 
+//To run this file in VS Code
+//Open Developer console
+//Type code -> enter
+
 //Struct variables are public by default instead of private
 struct Sensor 
 {
