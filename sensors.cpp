@@ -15,7 +15,8 @@ using namespace std;
 struct Sensor 
 {
     int x, y, cost, coverage; //the number of other sensors within the current circle
-    
+    double weight;
+
     Sensor(int x, int y, int cost): x(x), y(y), cost(cost), coverage(0) {} // Short for this.x = x this.y = y this.cost=cost   
 };
 
@@ -87,9 +88,53 @@ void calculateCoverage()
     }
 }
 
+/*
+Formula: 
+give weight to each sensor (coverage/cost placeholder)
+sort sensors based on weight
+function picks highest weight first, then goes down
+skip if under budget
+
+what if sensors already covered? create bool covered[]
+*/
+
+void assignWeight(vector<Sensor> sensors)
+{
+    for(int i = 0; i < sensors.size(); i++)
+    {
+        sensors[i].weight = (double)sensors[i].coverage/sensors[i].cost;
+    }
+}
+
+void sortSensors(vector<Sensor> sensors)
+{
+    //copy sensors array to new array for sorting
+    vector<Sensor> sortedSensors(sensors); 
+
+    //selection sort
+    int i, j, min_idx; 
+    for(int i = 0; i < sortedSensors.size()-1; i++)
+    {
+        min_idx = i; 
+        for (j = i+1; j < sortedSensors.size(); j++)
+        {
+          if (sortedSensors[j].weight < sortedSensors[min_idx].weight) 
+              min_idx = j;
+        }
+        // Swap the found minimum element 
+        // with the first element 
+        if (min_idx!=i)
+        {        
+            double temp = sortedSensors[min_idx].weight;
+            sortedSensors[min_idx].weight = sortedSensors[i].weight;
+            sortedSensors[i].weight = temp;                        
+        }
+    }
+}
+
 int main() 
 {
-    //NO COUT
+    //NO COUT    
     ofstream output;
     output.open ("output.txt", ofstream::out | ofstream::trunc); //truncate (erase) previous contents of the output file
     output << "Sensors:\n";
