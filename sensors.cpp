@@ -14,9 +14,7 @@ using namespace std;
 //Struct variables are public by default instead of private
 struct Sensor 
 {
-    int x, y;
-    int cost;
-    int coverage; //the number of other sensors within the current circle
+    int x, y, cost, coverage; //the number of other sensors within the current circle
     
     Sensor(int x, int y, int cost): x(x), y(y), cost(cost), coverage(0) {} // Short for this.x = x this.y = y this.cost=cost   
 };
@@ -55,11 +53,24 @@ set<int> chooseSensorsRandomly(int amount)
     return chosen;
 }
 
+
+
+set<int> chooseCheapestSensors()
+{
+    set<int> chosen;
+    int totalCost = 0;
+    for (int i = 0; budget >= sensors[i].cost; ++i)
+    {
+        totalCost += sensors[i].cost;
+        chosen.insert(i);
+    }
+    return chosen;
+}
+
 double calculateDistance(Sensor s1, Sensor s2)
 {
     return sqrt( pow(s2.x - s1.x, 2) + pow(s2.y - s1.y, 2) );
 }
-
 
 void calculateCoverage()
 {
@@ -67,12 +78,10 @@ void calculateCoverage()
     {
         for(int j = 0; j < sensors.size(); j++)
         {
-            if(i==j) //Don't count coverage for the sensor itself
-            continue;
-
-            if(calculateDistance(sensors[i], sensors[j]) < R)
-            {
-                sensors[i].coverage++;
+            //Don't count coverage for the sensor itself            
+            if(i!=j && calculateDistance(sensors[i], sensors[j]) < R) 
+            {                            
+                sensors[i].coverage++;                
             }
         }
     }
