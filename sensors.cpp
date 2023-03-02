@@ -106,7 +106,7 @@ void assignWeight(vector<Sensor> sensors)
     }
 }
 
-void sortSensors(vector<Sensor> sensors)
+vector<Sensor> sortSensors(vector<Sensor> sensors)
 {
     //copy sensors array to new array for sorting
     vector<Sensor> sortedSensors(sensors); 
@@ -130,6 +130,7 @@ void sortSensors(vector<Sensor> sensors)
             sortedSensors[i].weight = temp;                        
         }
     }
+    return sortedSensors;
 }
 
 int main() 
