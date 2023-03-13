@@ -95,7 +95,7 @@ double calculateDistance(pair<int, int> p1, pair<int, int> p2)
 }
 
 void calculateCoverage()
-{    
+{
     for(int i = 0; i < sensors.size(); i++)
     {
         for(int j = 0; j < sensors.size(); j++)
@@ -127,6 +127,20 @@ void assignWeight(vector<Sensor> sensors)
     }
 }
 
+void processChosenSensor(int index) {
+    Sensor origin = sensors[index];
+    vector<int> touched = returnCoveredSensors(origin);
+    touched.push_back(index);
+
+    for (int inner : touched) {
+        for (int outer : returnCoveredSensors(sensors[inner])) {
+            if (calculateDistance(sensors[outer], sensors[inner]) < R) {
+                sensors[outer].coverage--;
+            }
+        }
+    }
+}
+
 vector<Sensor> sortSensors(vector<Sensor> sensors)
 {
     //copy sensors array to new array for sorting
@@ -139,7 +153,7 @@ vector<Sensor> sortSensors(vector<Sensor> sensors)
         min_idx = i; 
         for (j = i+1; j < sortedSensors.size(); j++)
         {
-          if (sortedSensors[j].weight < sortedSensors[min_idx].weight) 
+          if (sortedSensors[j].cost < sortedSensors[min_idx].cost) 
               min_idx = j;
         }
         // Swap the found minimum element 
@@ -199,7 +213,7 @@ void generateSensorsClustered() {
     }
 
     for (auto point : points) {
-        int mean = randint(30, 70);
+        int mean = randint(200, 400);
         int deviation = 8;
         for (int i = 0; i < 25; i++) {
             int x = randint(max(point.first - 20, 0), min(point.first + 20, 100));
@@ -220,11 +234,14 @@ int main()
         sensors.push_back(Sensor(randint(0, 100), randint(0, 100), randint(250, 500)));
     }
     sensors = sortSensors(sensors);
+    for (Sensor s : sensors) {
+        cout << s.cost << ' ';
+    }
     calculateCoverage();
     
     for (Sensor &s : sensors)
     {
-        output << '(' << s.x << ", " << s.y << ")\n";
+        output << '(' << s.x << ", " << s.y << ", " << s.cost << ")\n";
     }
 
     output << endl;

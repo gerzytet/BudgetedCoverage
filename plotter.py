@@ -15,9 +15,11 @@ for line in lines[index:]:
 
 x_data = []
 y_data = []
-for x, y in points:
+color_data = []
+for x, y, cost in points:
     x_data.append(x)
     y_data.append(y)
+    color_data.append(((cost - 250) / 250) / 2 + 0.5)
 
 while not lines[index].isnumeric():
     index += 1
@@ -30,12 +32,15 @@ for line in lines[index:]:
         break
 
 chosen_points = []
+chosen_colors = []
 for i in chosen:
+    chosen_colors.append(color_data[i])
     chosen_points.append(points[i])
 
 chosen_x = []
 chosen_y = []
-for x, y in chosen_points:
+
+for x, y, _ in chosen_points:
     chosen_x.append(x)
     chosen_y.append(y)
     index += 1
@@ -57,7 +62,7 @@ print(area)
 
 plt.ylim(0, 100)
 plt.xlim(0, 100)
-plt.scatter(chosen_x, chosen_y, marker='o', c=colors, s=[area]*len(chosen), alpha = 0.5)
+plt.scatter(chosen_x, chosen_y, marker='o', c=chosen_colors, s=[area]*len(chosen), alpha = 0.4)
 #plt.scatter([20], [20], marker='o', s=[area], alpha = 0.5)
-plt.scatter(x_data, y_data, marker='X')
+plt.scatter(x_data, y_data, marker='X', c=color_data)
 plt.show()
