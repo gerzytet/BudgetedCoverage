@@ -85,7 +85,7 @@ double calculateDistance(Sensor s1, Sensor s2)
 }
 
 void calculateCoverage()
-{    
+{               
     for(int i = 0; i < sensors.size(); i++)
     {
         for(int j = 0; j < sensors.size(); j++)
@@ -96,7 +96,21 @@ void calculateCoverage()
                 sensors[i].coverage++;                                     
             }
         }
-    }
+    }    
+}
+
+vector<int> returnCoveredSensors(int index)
+{
+    vector<int> covered;    
+    for(int j = 0; j < sensors.size(); j++)
+    {
+        //Don't count coverage for the sensor itself            
+        if(index != j && calculateDistance(sensors[index], sensors[j]) < R) 
+        {                                                            
+            covered.push_back(j);                                                 
+        }
+    }        
+    return covered;
 }
 
 /*
@@ -117,10 +131,10 @@ void assignWeight(vector<Sensor> sensors)
     }
 }
 
-vector<Sensor> sortSensors(vector<Sensor> sensors)
+vector<Sensor> sortSensors(vector<Sensor> s)
 {
     //copy sensors array to new array for sorting
-    vector<Sensor> sortedSensors(sensors); 
+    vector<Sensor> sortedSensors(s); 
 
     //selection sort
     int i, j, min_idx; 
@@ -185,6 +199,21 @@ void generateSensorsClustered()
     }
 }
 
+// vector<int> returnCovered(Sensor s)
+// {
+//     for(int i = 0; i < sensors.size(); i++)
+//     {
+//         for(int j = 0; j < sensors.size(); j++)
+//         {
+//             //Don't count coverage for the sensor itself            
+//             if(i!=j && calculateDistance(sensors[i], sensors[j]) < R) 
+//             {                                                            
+//                 sensors[i].coverage++;                                     
+//             }
+//         }
+//     }
+// }
+
 int main() 
 {    
     //NO COUT    
@@ -197,7 +226,7 @@ int main()
     }
     sensors = sortSensors(sensors);
     calculateCoverage();
-    
+
     for (Sensor &s : sensors)
     {
         output << '(' << s.x << ", " << s.y << ")\n";
@@ -236,15 +265,31 @@ int main()
     {
         
     }
+    
+    //Set coverage to zero for sensors as chosen to prevent
+    //overlapping coverage
 
     //bool covered[NUM_POINTS] = {false};
     int coveredIndexes[NUM_POINTS];
 
-    //Set coverage to zero for sensors as chosen to prevent
-    //overlapping coverage
+    /*
+    for (int i = 0; i < greedySort.size() && (totalCost + greedySort[i].cost) <= budget; ++i)
+    {
+        totalCost += sensors[i].cost;
+        chosen.push_back(greedySort[i]);
+        chosen.at(i).coverage = 0;        
+    }
+    */
 
     cout << "Total Cost: " << totalCost;
     cout << "\nTotal Coverage: " << totalCoverage << endl;
+
+    // cout << "Covered Sensors for sensor at x=" << sensors[20].x << ", y=" << sensors[20].y;
+    // cout << "\n";
+    // for(int i : returnCoveredSensors(20))
+    // {
+    //     cout << "Sensor at x=" << sensors[i].x << ", y=" << sensors[i].y << "\n";
+    // }
     
     output << endl;
 
