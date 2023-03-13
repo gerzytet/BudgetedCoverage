@@ -14,7 +14,7 @@ using namespace std;
 //Struct variables are public by default instead of private
 struct Sensor 
 {
-    int x, y, cost, coverage; //the number of other sensors within the current circle
+    int x, y, cost, coverage; //coverage: the number of other sensors within the current circle
     double weight;
 
     Sensor(int x, int y, int cost): x(x), y(y), cost(cost), coverage(0) {} // Short for this.x = x this.y = y this.cost=cost   
@@ -70,7 +70,8 @@ vector<Sensor> greedyAlgorithm()
     vector<Sensor> greedySort(sensors);
     vector<Sensor> chosen;
     int totalCost = 0;
-    for (int i = 0; (totalCost + greedySort[i].cost) <= budget && i < greedySort.size(); ++i)
+    //Check greedySort.size first to prevent out of bounds error
+    for (int i = 0; i < greedySort.size() && (totalCost + greedySort[i].cost) <= budget; ++i)
     {
         totalCost += sensors[i].cost;
         chosen.push_back(greedySort[i]);
@@ -85,14 +86,16 @@ double calculateDistance(Sensor s1, Sensor s2)
 
 void calculateCoverage()
 {
+    bool covered[NUM_POINTS] = {0};
+
     for(int i = 0; i < sensors.size(); i++)
     {
         for(int j = 0; j < sensors.size(); j++)
         {
             //Don't count coverage for the sensor itself            
             if(i!=j && calculateDistance(sensors[i], sensors[j]) < R) 
-            {                            
-                sensors[i].coverage++;                
+            {                                             
+                sensors[i].coverage++;                            
             }
         }
     }
@@ -141,11 +144,6 @@ vector<Sensor> sortSensors(vector<Sensor> sensors)
     return sortedSensors;
 }
 
-void showResults()
-{
-
-}
-
 int main() 
 {    
     //NO COUT    
@@ -157,6 +155,7 @@ int main()
         sensors.push_back(Sensor(randint(0, 100), randint(0, 100), randint(250, 500)));
     }
     sensors = sortSensors(sensors);
+    calculateCoverage();
     
     for (Sensor &s : sensors)
     {
@@ -166,7 +165,7 @@ int main()
     output << endl;
 
     output << "Chosen:\n";
-    cout << "Which algorithm would you like to use? (enter 1 or 2)\n1. Greedy Algorithm\n2. Random Algorithm\n3. Budgeted Algorithm\n";
+    cout << "Which algorithm would you like to use?\n1. Greedy Algorithm\n2. Random Algorithm\n3. Budgeted Algorithm\n";
     int algorithmChoice = -1;
     cin >> algorithmChoice;
 
@@ -196,6 +195,7 @@ int main()
     {
         
     }
+
     cout << "Total Cost: " << totalCost;
     cout << "\nTotal Coverage: " << totalCoverage << endl;
     
