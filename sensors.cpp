@@ -141,13 +141,12 @@ void assignWeight(vector<Sensor> sensors)
     }
 }
 
-void processChosenSensor(int index) {
-    Sensor origin = sensors[index];
+void processChosenSensor(int origin) {
     vector<int> touched = returnCoveredSensors(origin);
-    touched.push_back(index);
+    touched.push_back(origin);
 
     for (int inner : touched) {
-        for (int outer : returnCoveredSensors(sensors[inner])) {
+        for (int outer : returnCoveredSensors(inner)) {
             if (calculateDistance(sensors[outer], sensors[inner]) < R) {
                 sensors[outer].coverage--;
             }
