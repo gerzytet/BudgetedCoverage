@@ -199,21 +199,6 @@ void generateSensorsClustered()
     }
 }
 
-// vector<int> returnCovered(Sensor s)
-// {
-//     for(int i = 0; i < sensors.size(); i++)
-//     {
-//         for(int j = 0; j < sensors.size(); j++)
-//         {
-//             //Don't count coverage for the sensor itself            
-//             if(i!=j && calculateDistance(sensors[i], sensors[j]) < R) 
-//             {                                                            
-//                 sensors[i].coverage++;                                     
-//             }
-//         }
-//     }
-// }
-
 int main() 
 {    
     //NO COUT    
@@ -264,22 +249,7 @@ int main()
     else if(algorithmChoice == 3)
     {
         
-    }
-    
-    //Set coverage to zero for sensors as chosen to prevent
-    //overlapping coverage
-
-    //bool covered[NUM_POINTS] = {false};
-    int coveredIndexes[NUM_POINTS];
-
-    /*
-    for (int i = 0; i < greedySort.size() && (totalCost + greedySort[i].cost) <= budget; ++i)
-    {
-        totalCost += sensors[i].cost;
-        chosen.push_back(greedySort[i]);
-        chosen.at(i).coverage = 0;        
-    }
-    */
+    }             
 
     cout << "Total Cost: " << totalCost;
     cout << "\nTotal Coverage: " << totalCoverage << endl;
@@ -290,6 +260,41 @@ int main()
     // {
     //     cout << "Sensor at x=" << sensors[i].x << ", y=" << sensors[i].y << "\n";
     // }
+
+    /*
+    for (int i = 0; i < greedySort.size() && (totalCost + greedySort[i].cost) <= budget; ++i)
+    {
+        totalCost += sensors[i].cost;
+        chosen.push_back(greedySort[i]);                
+        for(int index : returnCoveredSensors(sensors[i]))
+        {
+            sensors[index].coverage--;
+        }             
+        sensors[i].coverage = 0;
+    }
+    */
+
+   /*
+   bool contains(int arr[], int find)
+   {
+        for(int i = 0; i < arr.length; i++)
+        {
+            if(arr[i] == find)
+            return true;
+        }
+        return false;
+   }
+
+   int sourceCoveredSensors[] = returnCoveredSensors(sensors[i]);
+   int childCoveredSensors[] = returnCoveredSensors(sourceCoveredSensors[j]));
+    int mutualSensors = 0;
+   for(int index : sourceCoveredSensors)
+   {
+        if(contains(childCoveredSensors, index))        
+            mutualSensors++;        
+   }  
+   sourceCoveredSensors[i] -= (1 + mutualSensors);
+   */
     
     output << endl;
 
