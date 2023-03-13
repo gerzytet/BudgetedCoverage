@@ -125,9 +125,7 @@ vector<Sensor> sortSensors(vector<Sensor> sensors)
         // with the first element 
         if (min_idx!=i)
         {        
-            double temp = sortedSensors[min_idx].weight;
-            sortedSensors[min_idx].weight = sortedSensors[i].weight;
-            sortedSensors[i].weight = temp;                        
+            swap(sortedSensors[min_idx], sortedSensors[i]);                    
         }
     }
     return sortedSensors;
