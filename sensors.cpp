@@ -70,7 +70,7 @@ vector<Sensor> greedyAlgorithm()
     vector<Sensor> greedySort(sensors);
     vector<Sensor> chosen;
     int totalCost = 0;
-    for (int i = 0; (totalCost + greedySort[i].cost) <= budget && i < greedySort.size(); ++i)
+    for (int i = 0; i < greedySort.size() && (totalCost + greedySort[i].cost) <= budget; ++i)
     {
         totalCost += sensors[i].cost;
         chosen.push_back(greedySort[i]);
@@ -153,6 +153,18 @@ void generateSensorsRandomly() {
 }
 
 void generateSensorsUniformly() {
+    for (int i = 0; i < 10; i++) {
+        for (int j = 0; j < 10; j++) {
+            if (i * 10 + j >= NUM_POINTS) {
+                return;
+            }
+
+            sensors.push_back(Sensor(1 * 20, j * 20, randomCost()));
+        }
+    }
+}
+
+void generateSensorsClustered() {
     for (int i = 0; i < 10; i++) {
         for (int j = 0; j < 10; j++) {
             if (i * 10 + j >= NUM_POINTS) {
