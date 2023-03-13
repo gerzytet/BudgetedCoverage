@@ -85,17 +85,15 @@ double calculateDistance(Sensor s1, Sensor s2)
 }
 
 void calculateCoverage()
-{
-    bool covered[NUM_POINTS] = {0};
-
+{    
     for(int i = 0; i < sensors.size(); i++)
     {
         for(int j = 0; j < sensors.size(); j++)
         {
             //Don't count coverage for the sensor itself            
             if(i!=j && calculateDistance(sensors[i], sensors[j]) < R) 
-            {                                             
-                sensors[i].coverage++;                            
+            {                                                            
+                sensors[i].coverage++;                                     
             }
         }
     }
@@ -196,11 +194,17 @@ int main()
         
     }
 
+    //bool covered[NUM_POINTS] = {false};
+    int coveredIndexes[NUM_POINTS];
+
+    //Set coverage to zero for sensors as chosen to prevent
+    //overlapping coverage
+
     cout << "Total Cost: " << totalCost;
     cout << "\nTotal Coverage: " << totalCoverage << endl;
     
     output << endl;
 
     output << "R:\n";
-    output << R << '\n';    
+    output << R << '\n';       
 }
