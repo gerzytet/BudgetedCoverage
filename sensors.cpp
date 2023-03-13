@@ -34,6 +34,11 @@ double randfloat(double a, double b)
     return distribution(randomGenerator);
 }
 
+double randnormal(double mean, double deviation) {
+    normal_distribution<double> distribution(mean, deviation);
+    return distribution(randomGenerator);
+}
+
 vector<Sensor> sensors;
 const int NUM_POINTS = 40;
 const int R = 20;
@@ -82,6 +87,11 @@ vector<Sensor> greedyAlgorithm()
 double calculateDistance(Sensor s1, Sensor s2)
 {
     return sqrt( pow(s2.x - s1.x, 2) + pow(s2.y - s1.y, 2) );
+}
+
+double calculateDistance(pair<int, int> p1, pair<int, int> p2)
+{
+    return sqrt( pow(p1.first - p2.first, 2) + pow(p2.second - p2.second, 2) );
 }
 
 void calculateCoverage()
@@ -167,14 +177,31 @@ void generateSensorsUniformly() {
     }
 }
 
+const int NEIGHBORHOODS = 4;
 void generateSensorsClustered() {
-    for (int i = 0; i < 10; i++) {
-        for (int j = 0; j < 10; j++) {
-            if (i * 10 + j >= NUM_POINTS) {
-                return;
+    vector<pair<int, int>> points;
+    while (points.size() < NEIGHBORHOODS) {
+        pair<int, int> point = make_pair(randint(0, 100), randint(0, 100));
+        bool tooClose = false;
+        for (auto otherPoint : points) {
+            if (calculateDistance(point, otherPoint) < 40) {
+                tooClose = true;
+                break;
             }
+        }
 
-            sensors.push_back(Sensor(1 * 20, j * 20, randomCost()));
+        if (tooClose) {
+            continue;
+        }
+    }
+
+    for (auto point : points) {
+        int mean = randint(30, 70);
+        int deviation = 8;
+        for (int i = 0; i < 25; i++) {
+            int x = randint(max(point.first - 20, 0), min(point.first + 20, 100));
+            int y = randint(max(point.second - 20, 0), min(point.second + 20, 100));
+            sensors.push_back(Sensor(x, y, randnormal(mean, deviation)));
         }
     }
 }
