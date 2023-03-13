@@ -151,7 +151,7 @@ int main()
     output << endl;
 
     output << "Chosen:\n";
-    cout << "Which algorithm would you like to use? (enter 1 or 2)\n1. Greedy Algorithm\n2. Random Algorithm\n3. Budgeted Algorithm";
+    cout << "Which algorithm would you like to use? (enter 1 or 2)\n1. Greedy Algorithm\n2. Random Algorithm\n3. Budgeted Algorithm\n";
     int algorithmChoice = -1;
     cin >> algorithmChoice;
 
