@@ -39,17 +39,28 @@ const int NUM_POINTS = 40;
 const int R = 20;
 const int budget = 10000;
 
-set<int> chooseSensorsRandomly(int amount) 
-{
+set<int> chooseSensorsRandomly() 
+{    
+    int totalCost = 0;
     set<int> chosen;
-    for (int i = 0; i < amount; i++) 
+    int brokeCount = 0;
+
+    while(chosen.size() < sensors.size() && brokeCount < 40)
     {
         int index = randint(0, NUM_POINTS - 1);
         while (chosen.count(index) != 0) 
         {
             index = randint(0, NUM_POINTS - 1);
         }
+
+        if((totalCost + sensors[index].cost) > budget)
+        {
+            brokeCount++;
+            continue;
+        }        
+        
         chosen.insert(index);
+        totalCost += sensors[index].cost;
     }
     return chosen;
 }
@@ -130,18 +141,22 @@ vector<Sensor> sortSensors(vector<Sensor> sensors)
     return sortedSensors;
 }
 
-int main() 
+void showResults()
 {
-    sensors = sortSensors(sensors);
 
+}
+
+int main() 
+{    
     //NO COUT    
     ofstream output;
     output.open ("output.txt", ofstream::out | ofstream::trunc); //truncate (erase) previous contents of the output file
     output << "Sensors:\n";
     for (int i = 0; i < NUM_POINTS; i++)
     {
-        sensors.push_back(Sensor(randint(0, 100), randint(0, 100), randint(0, 100)));
+        sensors.push_back(Sensor(randint(0, 100), randint(0, 100), randint(250, 500)));
     }
+    sensors = sortSensors(sensors);
     
     for (Sensor &s : sensors)
     {
@@ -156,25 +171,34 @@ int main()
     cin >> algorithmChoice;
 
     int index = 0;
+    int totalCost = 0;
+    int totalCoverage = 0;
     if(algorithmChoice == 1)
     {
         for(Sensor s : greedyAlgorithm())
         {
             output << index << '\n';
             index++;
+            totalCost += s.cost;
+            totalCoverage += s.coverage;
         }
     }
     else if(algorithmChoice == 2)
     {
-        for (int index : chooseSensorsRandomly(10)) 
+        for (int index : chooseSensorsRandomly()) 
         {
             output << index << '\n';
+            totalCost += sensors[index].cost;
+            totalCoverage += sensors[index].coverage;            
         }        
     }    
     else if(algorithmChoice == 3)
     {
         
     }
+    cout << "Total Cost: " << totalCost;
+    cout << "\nTotal Coverage: " << totalCoverage << endl;
+    
     output << endl;
 
     output << "R:\n";
