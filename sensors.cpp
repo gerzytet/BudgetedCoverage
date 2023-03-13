@@ -95,17 +95,15 @@ double calculateDistance(pair<int, int> p1, pair<int, int> p2)
 }
 
 void calculateCoverage()
-{
-    bool covered[NUM_POINTS] = {0};
-
+{    
     for(int i = 0; i < sensors.size(); i++)
     {
         for(int j = 0; j < sensors.size(); j++)
         {
             //Don't count coverage for the sensor itself            
             if(i!=j && calculateDistance(sensors[i], sensors[j]) < R) 
-            {                                             
-                sensors[i].coverage++;                            
+            {                                                            
+                sensors[i].coverage++;                                     
             }
         }
     }
@@ -154,24 +152,29 @@ vector<Sensor> sortSensors(vector<Sensor> sensors)
     return sortedSensors;
 }
 
-int randomCost() {
-    return randint(0, 100);
+int randomCost() 
+{
+    return randint(250, 500);
 }
 
-void generateSensorsRandomly() {
+void generateSensorsRandomly() 
+{
     for (int i = 0; i < NUM_POINTS; i++)
     {
         sensors.push_back(Sensor(randint(0, 100), randint(0, 100), randomCost()));
     }
 }
 
-void generateSensorsUniformly() {
-    for (int i = 0; i < 10; i++) {
-        for (int j = 0; j < 10; j++) {
-            if (i * 10 + j >= NUM_POINTS) {
+void generateSensorsUniformly() 
+{
+    for (int i = 0; i < 10; i++) 
+    {
+        for (int j = 0; j < 10; j++) 
+        {
+            if (i * 10 + j >= NUM_POINTS) 
+            {
                 return;
             }
-
             sensors.push_back(Sensor(1 * 20, j * 20, randomCost()));
         }
     }
@@ -258,11 +261,17 @@ int main()
         
     }
 
+    //bool covered[NUM_POINTS] = {false};
+    int coveredIndexes[NUM_POINTS];
+
+    //Set coverage to zero for sensors as chosen to prevent
+    //overlapping coverage
+
     cout << "Total Cost: " << totalCost;
     cout << "\nTotal Coverage: " << totalCoverage << endl;
     
     output << endl;
 
     output << "R:\n";
-    output << R << '\n';    
+    output << R << '\n';       
 }
