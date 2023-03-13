@@ -54,16 +54,15 @@ set<int> chooseSensorsRandomly(int amount)
     return chosen;
 }
 
-
-
-set<int> chooseCheapestSensors()
+vector<Sensor> greedyAlgorithm()
 {
-    set<int> chosen;
+    vector<Sensor> greedySort(sensors);
+    vector<Sensor> chosen;
     int totalCost = 0;
-    for (int i = 0; budget >= sensors[i].cost; ++i)
+    for (int i = 0; (totalCost + greedySort[i].cost) <= budget && i < greedySort.size(); ++i)
     {
         totalCost += sensors[i].cost;
-        chosen.insert(i);
+        chosen.push_back(greedySort[i]);
     }
     return chosen;
 }
@@ -133,6 +132,8 @@ vector<Sensor> sortSensors(vector<Sensor> sensors)
 
 int main() 
 {
+    sensors = sortSensors(sensors);
+
     //NO COUT    
     ofstream output;
     output.open ("output.txt", ofstream::out | ofstream::trunc); //truncate (erase) previous contents of the output file
@@ -150,13 +151,28 @@ int main()
     output << endl;
 
     output << "Chosen:\n";
-    for (int index : chooseSensorsRandomly(10)) 
-    {
-        output << index << '\n';
-    }
+    cout << "Which algorithm would you like to use? (enter 1 or 2)\n1. Greedy Algorithm\n2. Budgeted Algorithm";
+    int algorithmChoice = -1;
+    cin >> algorithmChoice;
 
+    int index = 0;
+    if(algorithmChoice == 1)
+    {
+        for(Sensor s : greedyAlgorithm())
+        {
+            output << index << '\n';
+            index++;
+        }
+    }
+    else if(algorithmChoice == 2)
+    {
+        for (int index : chooseSensorsRandomly(10)) 
+        {
+            output << index << '\n';
+        }        
+    }    
     output << endl;
 
     output << "R:\n";
-    output << R << '\n';
+    output << R << '\n';    
 }
