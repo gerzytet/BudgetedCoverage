@@ -34,6 +34,11 @@ double randfloat(double a, double b)
     return distribution(randomGenerator);
 }
 
+double randnormal(double mean, double deviation) {
+    normal_distribution<double> distribution(mean, deviation);
+    return distribution(randomGenerator);
+}
+
 vector<Sensor> sensors;
 const int NUM_POINTS = 40;
 const int R = 20;
@@ -84,6 +89,11 @@ double calculateDistance(Sensor s1, Sensor s2)
     return sqrt( pow(s2.x - s1.x, 2) + pow(s2.y - s1.y, 2) );
 }
 
+double calculateDistance(pair<int, int> p1, pair<int, int> p2)
+{
+    return sqrt( pow(p1.first - p2.first, 2) + pow(p2.second - p2.second, 2) );
+}
+
 void calculateCoverage()
 {               
     for(int i = 0; i < sensors.size(); i++)
@@ -131,6 +141,20 @@ void assignWeight(vector<Sensor> sensors)
     }
 }
 
+void processChosenSensor(int index) {
+    Sensor origin = sensors[index];
+    vector<int> touched = returnCoveredSensors(origin);
+    touched.push_back(index);
+
+    for (int inner : touched) {
+        for (int outer : returnCoveredSensors(sensors[inner])) {
+            if (calculateDistance(sensors[outer], sensors[inner]) < R) {
+                sensors[outer].coverage--;
+            }
+        }
+    }
+}
+
 vector<Sensor> sortSensors(vector<Sensor> s)
 {
     //copy sensors array to new array for sorting
@@ -143,7 +167,7 @@ vector<Sensor> sortSensors(vector<Sensor> s)
         min_idx = i; 
         for (j = i+1; j < sortedSensors.size(); j++)
         {
-          if (sortedSensors[j].weight < sortedSensors[min_idx].weight) 
+          if (sortedSensors[j].cost < sortedSensors[min_idx].cost) 
               min_idx = j;
         }
         // Swap the found minimum element 
@@ -184,17 +208,31 @@ void generateSensorsUniformly()
     }
 }
 
-void generateSensorsClustered() 
-{
-    for (int i = 0; i < 10; i++) 
-    {
-        for (int j = 0; j < 10; j++) 
-        {
-            if (i * 10 + j >= NUM_POINTS) 
-            {
-                return;
+const int NEIGHBORHOODS = 4;
+void generateSensorsClustered() {
+    vector<pair<int, int>> points;
+    while (points.size() < NEIGHBORHOODS) {
+        pair<int, int> point = make_pair(randint(0, 100), randint(0, 100));
+        bool tooClose = false;
+        for (auto otherPoint : points) {
+            if (calculateDistance(point, otherPoint) < 40) {
+                tooClose = true;
+                break;
             }
-            sensors.push_back(Sensor(1 * 20, j * 20, randomCost()));
+        }
+
+        if (tooClose) {
+            continue;
+        }
+    }
+
+    for (auto point : points) {
+        int mean = randint(200, 400);
+        int deviation = 8;
+        for (int i = 0; i < 25; i++) {
+            int x = randint(max(point.first - 20, 0), min(point.first + 20, 100));
+            int y = randint(max(point.second - 20, 0), min(point.second + 20, 100));
+            sensors.push_back(Sensor(x, y, randnormal(mean, deviation)));
         }
     }
 }
@@ -210,11 +248,14 @@ int main()
         sensors.push_back(Sensor(randint(0, 100), randint(0, 100), randint(250, 500)));
     }
     sensors = sortSensors(sensors);
+    for (Sensor s : sensors) {
+        cout << s.cost << ' ';
+    }
     calculateCoverage();
 
     for (Sensor &s : sensors)
     {
-        output << '(' << s.x << ", " << s.y << ")\n";
+        output << '(' << s.x << ", " << s.y << ", " << s.cost << ")\n";
     }
 
     output << endl;
