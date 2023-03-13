@@ -144,7 +144,7 @@ vector<Sensor> sortSensors(vector<Sensor> sensors)
 
 int randomCost() 
 {
-    return randint(0, 100);
+    return randint(250, 500);
 }
 
 void generateSensorsRandomly() 
