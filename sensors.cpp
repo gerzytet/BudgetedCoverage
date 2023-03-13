@@ -130,18 +130,38 @@ vector<Sensor> sortSensors(vector<Sensor> sensors)
     return sortedSensors;
 }
 
+int randomCost() {
+    return randint(0, 100);
+}
+
+void generateSensorsRandomly() {
+    for (int i = 0; i < NUM_POINTS; i++)
+    {
+        sensors.push_back(Sensor(randint(0, 100), randint(0, 100), randomCost()));
+    }
+}
+
+void generateSensorsUniformly() {
+    for (int i = 0; i < 10; i++) {
+        for (int j = 0; j < 10; j++) {
+            if (i * 10 + j >= NUM_POINTS) {
+                return;
+            }
+
+            sensors.push_back(Sensor(1 * 20, j * 20, randomCost()));
+        }
+    }
+}
+
 int main() 
 {
     sensors = sortSensors(sensors);
 
-    //NO COUT    
+    //NO COUT
     ofstream output;
     output.open ("output.txt", ofstream::out | ofstream::trunc); //truncate (erase) previous contents of the output file
     output << "Sensors:\n";
-    for (int i = 0; i < NUM_POINTS; i++)
-    {
-        sensors.push_back(Sensor(randint(0, 100), randint(0, 100), randint(0, 100)));
-    }
+    
     
     for (Sensor &s : sensors)
     {
