@@ -21,8 +21,8 @@ struct Sensor
     Sensor(int x, int y, int cost): x(x), y(y), cost(cost), coverage(0) {} // Short for this.x = x this.y = y this.cost=cost   
 };
 
-long long nanos = chrono::steady_clock::now().time_since_epoch().count();
-minstd_rand randomGenerator(nanos);
+//long long nanos = chrono::steady_clock::now().time_since_epoch().count();
+minstd_rand randomGenerator(2);
 
 int randint(int a, int b) 
 {
@@ -96,19 +96,33 @@ double calculateDistance(pair<int, int> p1, pair<int, int> p2)
     return sqrt( pow(p1.first - p2.first, 2) + pow(p1.second - p2.second, 2) );
 }
 
-void calculateCoverage()
-{               
+void calculateCoverage(set<int> covered)
+{
+    for (Sensor &s : sensors) {
+        s.coverage = 0;
+    }
     for(int i = 0; i < sensors.size(); i++)
     {
+        if (covered.count(i) == 0) {
+            sensors[i].coverage++;
+        }
         for(int j = 0; j < sensors.size(); j++)
         {
+            if (covered.count(j) == 1) {
+                continue;
+            }
             //Don't count coverage for the sensor itself            
-            if(i!=j && calculateDistance(sensors[i], sensors[j]) < R) 
-            {                                                            
-                sensors[i].coverage++;                                     
+            if(i != j && calculateDistance(sensors[i], sensors[j]) < R) 
+            {
+                sensors[i].coverage++;
             }
         }
     }    
+}
+
+void calculateCoverage() {
+    set<int> covered;
+    calculateCoverage(covered);
 }
 
 vector<int> returnCoveredSensors(int index)
@@ -289,21 +303,33 @@ bool contains(vector<int> v, int find)
     sensors[index].coverage = 0;
 }*/
 
-void removeMutualSensors(int origin) 
+void removeMutualSensors(int origin, set<int> covered) 
 {
-    vector<int> touched = returnCoveredSensors(origin);
-    touched.push_back(origin);
+    /*
+    vector<int> touched;
+    sensors[origin].coverage--;
+    for (int inner : returnCoveredSensors(origin)) {
+        sensors[inner].coverage--;
+        if (covered.count(inner) == 0) {
+            touched.push_back(inner);
+        }
+    }
+    //touched.push_back(origin);
 
     for (int inner : touched) 
     {
         for (int outer : returnCoveredSensors(inner)) 
-        {    
-            if (calculateDistance(sensors[outer], sensors[inner]) < R) 
-            {
-                sensors[outer].coverage--;
+        {
+            if (covered.count(outer) == 1) {
+                continue;
+            }
+            sensors[outer].coverage--;
+            if (sensors[outer].coverage < 0) {
+                cout << "NERP";
             }
         }
-    }
+    }*/
+    calculateCoverage(covered);
 }
 
 vector<int> budgetAlgorithm()
@@ -319,108 +345,56 @@ vector<int> budgetAlgorithm()
         chosen.push_back(i);
     }
     return chosen;
-
 }
 
-vector<int> weightedAlgorithm(int budget)
+vector<int> weightedAlgorithm()
 {
-    vector<int> chosen;
+    set<int> chosen;
+    set<int> considered;
+    set<int> covered;
     int totalCost = 0;
     
     //initialize with the collection of sets S
     //allSets = ..
 
-    while (allSets not empty)
+    while (considered.size() < sensors.size())
     {
         //get element with max weight
-        int index_maxweight = 0;
-        double maxweight = 0
+        int index_maxweight = -1;
+        double maxweight = 0;
         for (int i = 0; i < sensors.size(); ++i)
         {
-            for (int j = 0; j < chosen.size(); ++j)
-                if (chosen[j] == i)
-                    goto skip;
+            if (considered.count(i) != 0) {
+                continue;
+            }
 
-            if ((double) (sensors[i].coverage / sensors[i].cost) > maxweight)
+            if ((((double)sensors[i].coverage) / ((double)sensors[i].cost)) > maxweight)
             {
                 index_maxweight = i;
-                maxweight = sensors[i].coverage / sensors[i].cost;
+                maxweight = (((double)sensors[i].coverage) / ((double)sensors[i].cost));
             }
 
             skip:
             ;
         }
 
+        if (index_maxweight == -1) {
+            break;
+        }
+
+        considered.insert(index_maxweight);
         if (totalCost + sensors[index_maxweight].cost < budget)
         {
-            chosen.push_back(index_maxweight);
-            removeMutualSensors(index_maxweight);
-            totalCost += sensors[index_maxweight].cost;
-        }
-        allSets -= sensors[index_maxweight];
-    }
-    //select a set St from G that maximizes Wt over S;
-
-    /*if (G weight >= weight)
-        return G;
-    else
-        return ;*/
-
-}
-
-vector<int> budgetAlgorithm()
-{    
-    vector<Sensor> sensorsCopy(sensors);
-    vector<int> chosen;
-    int totalCost = 0;
-    vector< vector<int> > universe;
-
-    for (int i = 0; i < sensorsCopy.size() && (totalCost + sensorsCopy[i].cost) <= budget; ++i)
-    {
-        totalCost += sensors[i].cost;
-        chosen.push_back(i);
-    }
-    return chosen;
-
-}
-
-vector<int> weightedAlgorithm(int budget)
-{
-    vector<int> chosen;
-    int totalCost = 0;
-    
-    //initialize with the collection of sets S
-    //allSets = ..
-
-    while (allSets not empty)
-    {
-        //get element with max weight
-        int index_maxweight = 0;
-        double maxweight = 0
-        for (int i = 0; i < sensors.size(); ++i)
-        {
-            for (int j = 0; j < chosen.size(); ++j)
-                if (chosen[j] == i)
-                    goto skip;
-
-            if ((double) (sensors[i].coverage / sensors[i].cost) > maxweight)
-            {
-                index_maxweight = i;
-                maxweight = sensors[i].coverage / sensors[i].cost;
+            //cout << sensors[index_maxweight].cost << ' ' << maxweight << ' ' << sensors[index_maxweight].coverage << '\n';
+            chosen.insert(index_maxweight);
+            for (int i : returnCoveredSensors(index_maxweight)) {
+                covered.insert(i);
             }
-
-            skip:
-            ;
-        }
-
-        if (totalCost + sensors[index_maxweight].cost < budget)
-        {
-            chosen.push_back(index_maxweight);
-            removeMutualSensors(index_maxweight);
+            removeMutualSensors(index_maxweight, covered);
             totalCost += sensors[index_maxweight].cost;
         }
-        allSets -= sensors[index_maxweight];
     }
+    return vector<int>(chosen.begin(), chosen.end());
     //select a set St from G that maximizes Wt over S;
 
     /*if (G weight >= weight)
@@ -432,6 +406,9 @@ vector<int> weightedAlgorithm(int budget)
 
 int calculateTotalCoverage(vector<int> sensors) {
     set<int> covered;
+    for (int i : sensors) {
+        covered.insert(i);
+    }
     for (int sensor : sensors) {
         for (int touching : returnCoveredSensors(sensor)) {
             covered.insert(touching);
@@ -477,6 +454,7 @@ struct TrialResult {
 };
 
 TrialResult runTrial(int algorithmChoice, int distributionChoice, int R_, int budget_) {
+    sensors.clear();
     R = R_;
     budget = budget_;
     ofstream output;
@@ -511,35 +489,23 @@ TrialResult runTrial(int algorithmChoice, int distributionChoice, int R_, int bu
     if(algorithmChoice == 1)
     {
         chosen = greedyAlgorithm();
-        for(int i : chosen)
-        {
-            output << i << '\n';
-            Sensor s = sensors[i];
-            totalCost += s.cost;
-            totalCoverage += s.coverage;
-        }
     }
     else if(algorithmChoice == 2)
     {
-        chosen = chooseSensorsRandomly();
-        for (int index : chosen) 
-        {
-            output << index << '\n';
-            totalCost += sensors[index].cost;
-            totalCoverage += sensors[index].coverage;            
-        }        
+        chosen = chooseSensorsRandomly();    
     }    
     else if(algorithmChoice == 3)
     {
-        for (int index: weightedAlgorithm())
-        {
-            output << index << '\n';
-            totalCost += sensors[index].cost;
-            totalCoverage += sensors[index].coverage;   
-        }
-    }             
+        chosen = weightedAlgorithm();
+        
+    }
+    for (int index: chosen)
+    {
+        output << index << '\n';
+        totalCost += sensors[index].cost;
+        totalCoverage += sensors[index].coverage;   
+    }     
 
-    calculateCoverage();
     output << endl;    
     output << "Chosen:\n";
 
@@ -554,22 +520,37 @@ TrialResult runTrial(int algorithmChoice, int distributionChoice, int R_, int bu
 }
 
 void experiment() {
+    // ofstream output;
+    // output.open ("experiment_output.txt", ofstream::out | ofstream::trunc); //truncate (erase) previous contents of the output file
+
+    // output << "budget coverage\n";
+    // output << "random greedy smart\n";
+
+    // for (int budget = 500; budget <= 8000; budget += 500) {
+    //     auto randomTrial = runTrial(2, 1, 15, budget);
+    //     auto greedyTrial = runTrial(1, 1, 15, budget);
+    //     auto smartTrial = runTrial(3, 1, 15, budget);
+    //     output << budget << ' ' << randomTrial.coveragePercent() << ' ' << greedyTrial.coveragePercent() << ' ' << smartTrial.coveragePercent() << endl;
+    // }
+
     ofstream output;
     output.open ("experiment_output.txt", ofstream::out | ofstream::trunc); //truncate (erase) previous contents of the output file
 
-    output << "budget coverage\n";
-    output << "random greedy\n";
+    output << "R coverage\n";
+    output << "budget=1000 budget=3000 budget=5000\n";
 
-    for (int budget = 2000; budget <= 15000; budget += 1000) {
-        auto randomTrial = runTrial(2, 3, 15, budget);
-        auto greedyTrial = runTrial(1, 3, 15, budget);
-        output << budget << ' ' << randomTrial.coveragePercent() << ' ' << greedyTrial.coveragePercent() << endl;
+    for (int R = 5; R <= 25; R++) {
+        auto smartTrial = runTrial(3, 1, R, 1000);
+        auto smartTrial1 = runTrial(3, 1, R, 3000);
+        auto smartTrial2 = runTrial(3, 1, R, 5000);
+        output << R << ' ' << smartTrial.coveragePercent() << ' ' << smartTrial1.coveragePercent() << ' ' << smartTrial2.coveragePercent() << endl;
     }
 }
 
 int main() 
 {
     experiment();
+    runTrial(1, 2, 15, 2000);
     int algorithmChoice;
     std::cout << "Which algorithm would you like to use?\n1. Greedy Algorithm\n2. Random Algorithm\n3. Budgeted Algorithm\n";        
     std::cin >> algorithmChoice;
