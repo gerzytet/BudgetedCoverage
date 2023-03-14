@@ -280,25 +280,7 @@ void removeMutualSensors(int origin)
 
 int main() 
 {    
-    //NO COUT    
-    ofstream output;
-    output.open ("output.txt", ofstream::out | ofstream::trunc); //truncate (erase) previous contents of the output file
-    output << "Sensors:\n";
-    for (int i = 0; i < NUM_POINTS; i++)
-    {
-        sensors.push_back(Sensor(randint(0, 100), randint(0, 100), randint(250, 500)));        
-    }        
-    sensors = sortSensors(sensors);    
-    calculateCoverage();
-
-    for (Sensor &s : sensors)
-    {
-        output << '(' << s.x << ", " << s.y << ", " << s.cost << ")\n";
-    }
-
-    output << endl;    
-
-    output << "Chosen:\n";
+    //NO COUT        
     int algorithmChoice = -1;
     int distributionChoice = -1;
 
@@ -311,6 +293,38 @@ int main()
     cin >> distributionChoice;
 
     cout << endl;
+
+    ofstream output;
+    output.open ("output.txt", ofstream::out | ofstream::trunc); //truncate (erase) previous contents of the output file
+    output << "Sensors:\n";
+
+    if(distributionChoice == 1)
+    {
+        generateSensorsUniformly();
+    }
+    else if(distributionChoice == 2)
+    {
+        generateSensorsClustered();
+    }
+    else if(distributionChoice == 3)
+    {
+        generateSensorsRandomly();
+    }
+
+    // for (int i = 0; i < NUM_POINTS; i++)
+    // {
+    //     sensors.push_back(Sensor(randint(0, 100), randint(0, 100), randint(250, 500)));        
+    // }        
+    
+    sensors = sortSensors(sensors);    
+    calculateCoverage();
+
+    for (Sensor &s : sensors)
+    {
+        output << '(' << s.x << ", " << s.y << ", " << s.cost << ")\n";
+    }
+    output << endl;    
+    output << "Chosen:\n";
 
     int index = 0;
     int totalCost = 0;
