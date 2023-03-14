@@ -135,12 +135,37 @@ skip if under budget
 what if sensors already covered? create bool covered[]
 */
 
-void assignWeight(vector<Sensor> sensors)
+void assignWeight()
 {
     for(int i = 0; i < sensors.size(); i++)
     {
         sensors[i].weight = (double)sensors[i].coverage/sensors[i].cost;
     }
+}
+
+vector<Sensor> sortSensorsByWeight(vector<Sensor> s)
+{
+    //copy sensors array to new array for sorting
+    vector<Sensor> sortedSensors(s); 
+
+    //selection sort
+    int i, j, max_idx; 
+    for(int i = 0; i < sortedSensors.size()-1; i++)
+    {
+        max_idx = i; 
+        for (j = i+1; j < sortedSensors.size(); j++)
+        {
+          if (sortedSensors[j].weight > sortedSensors[max_idx].weight) 
+              max_idx = j;
+        }
+        // Swap the found maximum element 
+        // with the first element 
+        if (max_idx!=i)
+        {        
+            swap(sortedSensors[max_idx], sortedSensors[i]);                    
+        }
+    }
+    return sortedSensors;
 }
 
 vector<Sensor> sortSensors(vector<Sensor> s)
@@ -168,6 +193,8 @@ vector<Sensor> sortSensors(vector<Sensor> s)
     return sortedSensors;
 }
 
+
+
 int randomCost() 
 {
     return randint(250, 500);
@@ -192,7 +219,7 @@ void generateSensorsUniformly()
     }
 }
 
-const int NEIGHBORHOODS = 16;
+const int NEIGHBORHOODS = 4;
 void generateSensorsClustered() 
 {
     vector<pair<int, int>> points;
@@ -203,7 +230,7 @@ void generateSensorsClustered()
         bool tooClose = false;
         for (auto otherPoint : points) 
         {
-            if (calculateDistance(point, otherPoint) < threshold) 
+            if (calculateDistance(point, otherPoint) < 40) 
             {
                 threshold -= 0.01;
                 tooClose = true;
@@ -279,6 +306,130 @@ void removeMutualSensors(int origin)
     }
 }
 
+vector<int> budgetAlgorithm()
+{    
+    vector<Sensor> sensorsCopy(sensors);
+    vector<int> chosen;
+    int totalCost = 0;
+    vector< vector<int> > universe;
+
+    for (int i = 0; i < sensorsCopy.size() && (totalCost + sensorsCopy[i].cost) <= budget; ++i)
+    {
+        totalCost += sensors[i].cost;
+        chosen.push_back(i);
+    }
+    return chosen;
+
+}
+
+vector<int> weightedAlgorithm(int budget)
+{
+    vector<int> chosen;
+    int totalCost = 0;
+    
+    //initialize with the collection of sets S
+    //allSets = ..
+
+    while (allSets not empty)
+    {
+        //get element with max weight
+        int index_maxweight = 0;
+        double maxweight = 0
+        for (int i = 0; i < sensors.size(); ++i)
+        {
+            for (int j = 0; j < chosen.size(); ++j)
+                if (chosen[j] == i)
+                    goto skip;
+
+            if ((double) (sensors[i].coverage / sensors[i].cost) > maxweight)
+            {
+                index_maxweight = i;
+                maxweight = sensors[i].coverage / sensors[i].cost;
+            }
+
+            skip:
+            ;
+        }
+
+        if (totalCost + sensors[index_maxweight].cost < budget)
+        {
+            chosen.push_back(index_maxweight);
+            removeMutualSensors(index_maxweight);
+            totalCost += sensors[index_maxweight].cost;
+        }
+        allSets -= sensors[index_maxweight];
+    }
+    //select a set St from G that maximizes Wt over S;
+
+    /*if (G weight >= weight)
+        return G;
+    else
+        return ;*/
+
+}
+
+vector<int> budgetAlgorithm()
+{    
+    vector<Sensor> sensorsCopy(sensors);
+    vector<int> chosen;
+    int totalCost = 0;
+    vector< vector<int> > universe;
+
+    for (int i = 0; i < sensorsCopy.size() && (totalCost + sensorsCopy[i].cost) <= budget; ++i)
+    {
+        totalCost += sensors[i].cost;
+        chosen.push_back(i);
+    }
+    return chosen;
+
+}
+
+vector<int> weightedAlgorithm(int budget)
+{
+    vector<int> chosen;
+    int totalCost = 0;
+    
+    //initialize with the collection of sets S
+    //allSets = ..
+
+    while (allSets not empty)
+    {
+        //get element with max weight
+        int index_maxweight = 0;
+        double maxweight = 0
+        for (int i = 0; i < sensors.size(); ++i)
+        {
+            for (int j = 0; j < chosen.size(); ++j)
+                if (chosen[j] == i)
+                    goto skip;
+
+            if ((double) (sensors[i].coverage / sensors[i].cost) > maxweight)
+            {
+                index_maxweight = i;
+                maxweight = sensors[i].coverage / sensors[i].cost;
+            }
+
+            skip:
+            ;
+        }
+
+        if (totalCost + sensors[index_maxweight].cost < budget)
+        {
+            chosen.push_back(index_maxweight);
+            removeMutualSensors(index_maxweight);
+            totalCost += sensors[index_maxweight].cost;
+        }
+        allSets -= sensors[index_maxweight];
+    }
+    //select a set St from G that maximizes Wt over S;
+
+    /*if (G weight >= weight)
+        return G;
+    else
+        return ;*/
+
+}
+
 int calculateTotalCoverage(vector<int> sensors) {
     set<int> covered;
     for (int sensor : sensors) {
@@ -348,7 +499,8 @@ TrialResult runTrial(int algorithmChoice, int distributionChoice, int R_, int bu
         generateSensorsRandomly();
     }
 
-    sensors = sortSensors(sensors); 
+    sensors = sortSensors(sensors);    
+    calculateCoverage();
 
     for (Sensor &s : sensors)
     {
@@ -379,8 +531,13 @@ TrialResult runTrial(int algorithmChoice, int distributionChoice, int R_, int bu
     }    
     else if(algorithmChoice == 3)
     {
-
-    }
+        for (int index: weightedAlgorithm())
+        {
+            output << index << '\n';
+            totalCost += sensors[index].cost;
+            totalCoverage += sensors[index].coverage;   
+        }
+    }             
 
     calculateCoverage();
     output << endl;    
