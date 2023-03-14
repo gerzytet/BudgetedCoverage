@@ -195,13 +195,17 @@ void generateSensorsUniformly()
 }
 
 const int NEIGHBORHOODS = 4;
-void generateSensorsClustered() {
+void generateSensorsClustered() 
+{
     vector<pair<int, int>> points;
-    while (points.size() < NEIGHBORHOODS) {
+    while (points.size() < NEIGHBORHOODS) 
+    {
         pair<int, int> point = make_pair(randint(0, 100), randint(0, 100));
         bool tooClose = false;
-        for (auto otherPoint : points) {
-            if (calculateDistance(point, otherPoint) < 40) {
+        for (auto otherPoint : points) 
+        {
+            if (calculateDistance(point, otherPoint) < 40) 
+            {
                 tooClose = true;
                 break;
             }
@@ -213,10 +217,12 @@ void generateSensorsClustered() {
         }
     }
 
-    for (auto point : points) {
+    for (auto point : points) 
+    {
         int mean = randint(200, 400);
         int deviation = 8;
-        for (int i = 0; i < 25; i++) {
+        for (int i = 0; i < 25; i++) 
+        {
             int x = randint(max(point.first - 20, 0), min(point.first + 20, 100));
             int y = randint(max(point.second - 20, 0), min(point.second + 20, 100));
             sensors.push_back(Sensor(x, y, randnormal(mean, deviation)));
@@ -282,12 +288,7 @@ int main()
     {
         sensors.push_back(Sensor(randint(0, 100), randint(0, 100), randint(250, 500)));        
     }        
-
-    sensors = sortSensors(sensors);
-    for (Sensor s : sensors) 
-    {
-        std::cout << s.cost << ' ';
-    }
+    sensors = sortSensors(sensors);    
     calculateCoverage();
 
     for (Sensor &s : sensors)
@@ -298,9 +299,18 @@ int main()
     output << endl;    
 
     output << "Chosen:\n";
-    std::cout << "Which algorithm would you like to use?\n1. Greedy Algorithm\n2. Random Algorithm\n3. Budgeted Algorithm\n";
     int algorithmChoice = -1;
+    int distributionChoice = -1;
+
+    std::cout << "Which algorithm would you like to use?\n1. Greedy Algorithm\n2. Random Algorithm\n3. Budgeted Algorithm\n";        
     std::cin >> algorithmChoice;
+
+    cout << endl;
+
+    cout << "Choose a distribution\n1. Uniform\n2. Clustered\n3. Random\n";
+    cin >> distributionChoice;
+
+    cout << endl;
 
     int index = 0;
     int totalCost = 0;
@@ -337,6 +347,11 @@ int main()
     output << "R:\n";
     output << R << '\n';       
 }
+
+//for (Sensor s : sensors) 
+    // {
+    //     std::cout << s.cost << ' ';
+    // }
 
 // cout << "Covered Sensors for sensor at x=" << sensors[20].x << ", y=" << sensors[20].y;
     // cout << "\n";
