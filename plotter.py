@@ -62,7 +62,7 @@ print(area)
 
 plt.ylim(0, 100)
 plt.xlim(0, 100)
-plt.scatter(chosen_x, chosen_y, marker='o', c=chosen_colors, s=[area]*len(chosen), alpha = 0.4)
+plt.scatter(chosen_x + [1000], chosen_y + [1000], marker='o', c=chosen_colors + [((cost - 250) / 250) / 2 + 0.5], s=[area]*(len(chosen) + 1), alpha = 0.4)
 #plt.scatter([20], [20], marker='o', s=[area], alpha = 0.5)
 plt.scatter(x_data, y_data, marker='X', c=color_data)
 plt.show()
