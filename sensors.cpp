@@ -255,7 +255,7 @@ void removeMutualCoverage(int index)
     sensors[index].coverage = 0;
 }
 
-void processChosenSensor(int origin) 
+void removeMutualSensors(int origin) 
 {
     vector<int> touched = returnCoveredSensors(origin);
     touched.push_back(origin);
