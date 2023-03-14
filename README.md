@@ -2,6 +2,7 @@
 Landon Johnson,
 David Wonggant,
 A.L. Seppala,
+Craig White
 
 # Road Map:
 - Find, implement, and understand algorithm
