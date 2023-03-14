@@ -57,7 +57,8 @@ fig.set_figheight(5)
 inch_per_unit = (math.pi) / 100
 dots_per_inch = fig.dpi
 dots_per_unit = inch_per_unit * dots_per_inch
-area = math.pi * (R * dots_per_unit) ** 2
+fudge_factor = 1.1
+area = math.pi * (R * dots_per_unit * fudge_factor) ** 2
 print(area)
 
 plt.ylim(0, 100)
