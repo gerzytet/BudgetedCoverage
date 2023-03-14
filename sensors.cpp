@@ -196,7 +196,7 @@ void generateSensorsUniformly()
     }
 }
 
-const int NEIGHBORHOODS = 2;
+const int NEIGHBORHOODS = 4;
 void generateSensorsClustered() 
 {
     vector<pair<int, int>> points;
@@ -206,7 +206,7 @@ void generateSensorsClustered()
         bool tooClose = false;
         for (auto otherPoint : points) 
         {
-            if (calculateDistance(point, otherPoint) < 40) 
+            if (calculateDistance(point, otherPoint) < 20) 
             {
                 tooClose = true;
                 break;
@@ -281,6 +281,22 @@ void removeMutualSensors(int origin)
     }
 }
 
+vector<int> budgetAlgorithm()
+{    
+    vector<Sensor> sensorsCopy(sensors);
+    vector<int> chosen;
+    int totalCost = 0;
+    vector< vector<int> > universe;
+
+    for (int i = 0; i < sensorsCopy.size() && (totalCost + sensorsCopy[i].cost) <= budget; ++i)
+    {
+        totalCost += sensors[i].cost;
+        chosen.push_back(i);
+    }
+    return chosen;
+
+}
+
 int main() 
 {    
     //NO COUT        
@@ -314,11 +330,6 @@ int main()
         generateSensorsRandomly();
     }
 
-    // for (int i = 0; i < NUM_POINTS; i++)
-    // {
-    //     sensors.push_back(Sensor(randint(0, 100), randint(0, 100), randint(250, 500)));        
-    // }        
-    
     sensors = sortSensors(sensors);    
     calculateCoverage();
 
@@ -353,7 +364,12 @@ int main()
     }    
     else if(algorithmChoice == 3)
     {
-        
+        for(int index : budgetAlgorithm())
+        {
+            output << index << '\n';
+            totalCost += sensors[index].cost;
+            totalCoverage += sensors[index].coverage;
+        }
     }             
 
     std::cout << "Total Cost: " << totalCost;
