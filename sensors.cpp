@@ -196,7 +196,7 @@ void generateSensorsUniformly()
     }
 }
 
-const int NEIGHBORHOODS = 4;
+const int NEIGHBORHOODS = 2;
 void generateSensorsClustered() 
 {
     vector<pair<int, int>> points;
@@ -210,13 +210,14 @@ void generateSensorsClustered()
             {
                 tooClose = true;
                 break;
-            }
+            }            
         }
 
         if (tooClose) 
         {
             continue;
         }
+        points.push_back(point);
     }
 
     for (auto point : points) 
