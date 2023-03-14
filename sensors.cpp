@@ -550,7 +550,7 @@ void experiment() {
 int main() 
 {
     //experiment();
-    //runTrial(1, 2, 15, 2000);
+    //runTrial(3, 3, 15, 2500);
     int algorithmChoice;
     std::cout << "Which algorithm would you like to use?\n1. Greedy Algorithm\n2. Random Algorithm\n3. Budgeted Algorithm\n";        
     std::cin >> algorithmChoice;
