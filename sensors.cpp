@@ -4,6 +4,7 @@
 #include <fstream>
 #include <set>
 #include <cmath>
+#include <chrono>
 
 using namespace std;
 
@@ -20,7 +21,8 @@ struct Sensor
     Sensor(int x, int y, int cost): x(x), y(y), cost(cost), coverage(0) {} // Short for this.x = x this.y = y this.cost=cost   
 };
 
-minstd_rand randomGenerator(1);
+long long nanos = chrono::steady_clock::now().time_since_epoch().count();
+minstd_rand randomGenerator(nanos);
 
 int randint(int a, int b) 
 {
