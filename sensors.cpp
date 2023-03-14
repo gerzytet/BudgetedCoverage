@@ -133,12 +133,37 @@ skip if under budget
 what if sensors already covered? create bool covered[]
 */
 
-void assignWeight(vector<Sensor> sensors)
+void assignWeight()
 {
     for(int i = 0; i < sensors.size(); i++)
     {
         sensors[i].weight = (double)sensors[i].coverage/sensors[i].cost;
     }
+}
+
+vector<Sensor> sortSensorsByWeight(vector<Sensor> s)
+{
+    //copy sensors array to new array for sorting
+    vector<Sensor> sortedSensors(s); 
+
+    //selection sort
+    int i, j, max_idx; 
+    for(int i = 0; i < sortedSensors.size()-1; i++)
+    {
+        max_idx = i; 
+        for (j = i+1; j < sortedSensors.size(); j++)
+        {
+          if (sortedSensors[j].weight > sortedSensors[max_idx].weight) 
+              max_idx = j;
+        }
+        // Swap the found maximum element 
+        // with the first element 
+        if (max_idx!=i)
+        {        
+            swap(sortedSensors[max_idx], sortedSensors[i]);                    
+        }
+    }
+    return sortedSensors;
 }
 
 vector<Sensor> sortSensors(vector<Sensor> s)
@@ -165,6 +190,8 @@ vector<Sensor> sortSensors(vector<Sensor> s)
     }
     return sortedSensors;
 }
+
+
 
 int randomCost() 
 {
@@ -284,8 +311,15 @@ int main()
     int algorithmChoice = -1;
     int distributionChoice = -1;
 
-    std::cout << "Which algorithm would you like to use?\n1. Greedy Algorithm\n2. Random Algorithm\n3. Budgeted Algorithm\n";        
+    std::cout << "Which algorithm would you like to use?\n1. Greedy Algorithm\n2. Random Algorithm\n3. Weighted & Budgeted Algorithm\n";        
     std::cin >> algorithmChoice;
+
+    int budget = 0;
+    if (algorithmChoice == 3)
+    {
+        std::cout << "What is your budget?\n$";        
+        std::cin >> budget;
+    }
 
     cout << endl;
 
@@ -350,7 +384,20 @@ int main()
     }    
     else if(algorithmChoice == 3)
     {
+        assignWeight();
+        sensors = sortSensorsByWeight(sensors);
         
+        for (int i = 0; i < sensors.size(); ++i)
+        {
+            if (budget >= sensors[i].cost)
+            {
+                output << index << '\n';
+                index++;
+                totalCost += sensors[i].cost;
+                totalCoverage += sensors[i].coverage;
+                budget -= sensors[i].cost;
+            }
+        }
     }             
 
     std::cout << "Total Cost: " << totalCost;
