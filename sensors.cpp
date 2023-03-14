@@ -210,13 +210,14 @@ void generateSensorsClustered()
             {
                 tooClose = true;
                 break;
-            }
+            }            
         }
 
         if (tooClose) 
         {
             continue;
         }
+        points.push_back(point);
     }
 
     for (auto point : points) 
