@@ -143,19 +143,6 @@ void assignWeight(vector<Sensor> sensors)
     }
 }
 
-void processChosenSensor(int origin) {
-    vector<int> touched = returnCoveredSensors(origin);
-    touched.push_back(origin);
-
-    for (int inner : touched) {
-        for (int outer : returnCoveredSensors(inner)) {
-            if (calculateDistance(sensors[outer], sensors[inner]) < R) {
-                sensors[outer].coverage--;
-            }
-        }
-    }
-}
-
 vector<Sensor> sortSensors(vector<Sensor> s)
 {
     //copy sensors array to new array for sorting
@@ -210,27 +197,34 @@ void generateSensorsUniformly()
 }
 
 const int NEIGHBORHOODS = 4;
-void generateSensorsClustered() {
+void generateSensorsClustered() 
+{
     vector<pair<int, int>> points;
-    while (points.size() < NEIGHBORHOODS) {
+    while (points.size() < NEIGHBORHOODS) 
+    {
         pair<int, int> point = make_pair(randint(0, 100), randint(0, 100));
         bool tooClose = false;
-        for (auto otherPoint : points) {
-            if (calculateDistance(point, otherPoint) < 40) {
+        for (auto otherPoint : points) 
+        {
+            if (calculateDistance(point, otherPoint) < 40) 
+            {
                 tooClose = true;
                 break;
             }
         }
 
-        if (tooClose) {
+        if (tooClose) 
+        {
             continue;
         }
     }
 
-    for (auto point : points) {
+    for (auto point : points) 
+    {
         int mean = randint(200, 400);
         int deviation = 8;
-        for (int i = 0; i < 25; i++) {
+        for (int i = 0; i < 25; i++) 
+        {
             int x = randint(max(point.first - 20, 0), min(point.first + 20, 100));
             int y = randint(max(point.second - 20, 0), min(point.second + 20, 100));
             sensors.push_back(Sensor(x, y, randnormal(mean, deviation)));
@@ -238,48 +232,101 @@ void generateSensorsClustered() {
     }
 }
 
-// vector<int> returnCovered(Sensor s)
-// {
-//     for(int i = 0; i < sensors.size(); i++)
-//     {
-//         for(int j = 0; j < sensors.size(); j++)
-//         {
-//             //Don't count coverage for the sensor itself            
-//             if(i!=j && calculateDistance(sensors[i], sensors[j]) < R) 
-//             {                                                            
-//                 sensors[i].coverage++;                                     
-//             }
-//         }
-//     }
-// }
+bool contains(vector<int> v, int find)
+{
+    for(int i = 0; i < v.size(); i++)
+    {
+        if(v[i] == find)
+        return true;
+    }
+    return false;
+}
+
+void removeMutualCoverage(int index)
+{   
+    vector<int> sourceCoveredSensors = returnCoveredSensors(index);   
+    vector<int> childCoveredSensors;        
+    int mutualSensors = 0;                
+
+    for(int sr : sourceCoveredSensors)
+    {    
+        childCoveredSensors = returnCoveredSensors(sr);            
+        mutualSensors = 0;            
+
+        for(int index : sourceCoveredSensors)
+        {
+            if(contains(childCoveredSensors, index))        
+                mutualSensors++;        
+        }              
+        sensors[sr].coverage -= (1 + mutualSensors);
+    }
+    sensors[index].coverage = 0;
+}
+
+void removeMutualSensors(int origin) 
+{
+    vector<int> touched = returnCoveredSensors(origin);
+    touched.push_back(origin);
+
+    for (int inner : touched) 
+    {
+        for (int outer : returnCoveredSensors(inner)) 
+        {    
+            if (calculateDistance(sensors[outer], sensors[inner]) < R) 
+            {
+                sensors[outer].coverage--;
+            }
+        }
+    }
+}
 
 int main() 
 {    
-    //NO COUT    
+    //NO COUT        
+    int algorithmChoice = -1;
+    int distributionChoice = -1;
+
+    std::cout << "Which algorithm would you like to use?\n1. Greedy Algorithm\n2. Random Algorithm\n3. Budgeted Algorithm\n";        
+    std::cin >> algorithmChoice;
+
+    cout << endl;
+
+    cout << "Choose a distribution\n1. Uniform\n2. Clustered\n3. Random\n";
+    cin >> distributionChoice;
+
+    cout << endl;
+
     ofstream output;
     output.open ("output.txt", ofstream::out | ofstream::trunc); //truncate (erase) previous contents of the output file
     output << "Sensors:\n";
-    for (int i = 0; i < NUM_POINTS; i++)
+
+    if(distributionChoice == 1)
     {
-        sensors.push_back(Sensor(randint(0, 100), randint(0, 100), randint(250, 500)));
+        generateSensorsUniformly();
     }
-    sensors = sortSensors(sensors);
-    for (Sensor s : sensors) {
-        cout << s.cost << ' ';
+    else if(distributionChoice == 2)
+    {
+        generateSensorsClustered();
     }
+    else if(distributionChoice == 3)
+    {
+        generateSensorsRandomly();
+    }
+
+    // for (int i = 0; i < NUM_POINTS; i++)
+    // {
+    //     sensors.push_back(Sensor(randint(0, 100), randint(0, 100), randint(250, 500)));        
+    // }        
+    
+    sensors = sortSensors(sensors);    
     calculateCoverage();
 
     for (Sensor &s : sensors)
     {
         output << '(' << s.x << ", " << s.y << ", " << s.cost << ")\n";
     }
-
-    output << endl;
-
+    output << endl;    
     output << "Chosen:\n";
-    cout << "Which algorithm would you like to use?\n1. Greedy Algorithm\n2. Random Algorithm\n3. Budgeted Algorithm\n";
-    int algorithmChoice = -1;
-    cin >> algorithmChoice;
 
     int index = 0;
     int totalCost = 0;
@@ -306,35 +353,55 @@ int main()
     else if(algorithmChoice == 3)
     {
         
-    }
-    
-    //Set coverage to zero for sensors as chosen to prevent
-    //overlapping coverage
+    }             
 
-    //bool covered[NUM_POINTS] = {false};
-    int coveredIndexes[NUM_POINTS];
+    std::cout << "Total Cost: " << totalCost;
+    std::cout << "\nTotal Coverage: " << totalCoverage << endl;
 
-    /*
-    for (int i = 0; i < greedySort.size() && (totalCost + greedySort[i].cost) <= budget; ++i)
-    {
-        totalCost += sensors[i].cost;
-        chosen.push_back(greedySort[i]);
-        chosen.at(i).coverage = 0;        
-    }
-    */
-
-    cout << "Total Cost: " << totalCost;
-    cout << "\nTotal Coverage: " << totalCoverage << endl;
-
-    // cout << "Covered Sensors for sensor at x=" << sensors[20].x << ", y=" << sensors[20].y;
-    // cout << "\n";
-    // for(int i : returnCoveredSensors(20))
-    // {
-    //     cout << "Sensor at x=" << sensors[i].x << ", y=" << sensors[i].y << "\n";
-    // }
-    
     output << endl;
 
     output << "R:\n";
     output << R << '\n';       
 }
+
+//for (Sensor s : sensors) 
+    // {
+    //     std::cout << s.cost << ' ';
+    // }
+
+// cout << "Covered Sensors for sensor at x=" << sensors[20].x << ", y=" << sensors[20].y;
+    // cout << "\n";
+    // for(int i : returnCoveredSensors(20))
+    // {
+    //     cout << "Sensor at x=" << sensors[i].x << ", y=" << sensors[i].y << "\n";
+    // }        
+
+    //sensors.push_back({1,10,0});
+    // sensors.push_back({15,10,0});
+    // sensors.push_back({30,10,0});
+    // sensors.push_back({43,10,0});
+
+// std::cout << endl;
+//     int i = 0;
+//     for(Sensor s : sensors)
+//     {
+//         if(sensors[i].y == 10)
+//         std::cout << "10 y found at index: " << i << '\n';
+//         i++;
+//     }
+//     std::cout << endl << endl;
+
+//     for(int i = 0; i < 4; i++)    
+//     {
+//         std::cout << "\nCoverage of sensor (" << i << ") at x=" << sensors[i].x << ", y=" << sensors[i].y 
+//         << " before method: " << sensors[i].coverage;
+//     }
+//     std::cout << endl;
+
+//     processChosenSensor(1);
+//     for(int i = 0; i < 4; i++)    
+//     {
+//         std::cout << "\nCoverage of sensor (" << i << ") at x=" << sensors[i].x << ", y=" << sensors[i].y 
+//         << " after method: " << sensors[i].coverage;
+//     }
+//     std::cout << endl << endl;
