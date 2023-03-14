@@ -324,6 +324,52 @@ vector<int> budgetAlgorithm()
 
 }
 
+vector<int> weightedAlgorithm(int budget)
+{
+    vector<int> chosen;
+    int totalCost = 0;
+    
+    //initialize with the collection of sets S
+    //allSets = ..
+
+    while (allSets not empty)
+    {
+        //get element with max weight
+        int index_maxweight = 0;
+        double maxweight = 0
+        for (int i = 0; i < sensors.size(); ++i)
+        {
+            for (int j = 0; j < chosen.size(); ++j)
+                if (chosen[j] == i)
+                    goto skip;
+
+            if ((double) (sensors[i].coverage / sensors[i].cost) > maxweight)
+            {
+                index_maxweight = i;
+                maxweight = sensors[i].coverage / sensors[i].cost;
+            }
+
+            skip:
+            ;
+        }
+
+        if (totalCost + sensors[index_maxweight].cost < budget)
+        {
+            chosen.push_back(index_maxweight);
+            removeMutualSensors(index_maxweight);
+            totalCost += sensors[index_maxweight].cost;
+        }
+        allSets -= sensors[index_maxweight];
+    }
+    //select a set St from G that maximizes Wt over S;
+
+    /*if (G weight >= weight)
+        return G;
+    else
+        return ;*/
+
+}
+
 int main() 
 {    
     //NO COUT        
@@ -396,9 +442,14 @@ int main()
             totalCoverage += sensors[index].coverage;            
         }        
     }    
-    else if(algorithmChoice == 4)
+    else if(algorithmChoice == 3)
     {
-        
+        for (int index: weightedAlgorithm())
+        {
+            output << index << '\n';
+            totalCost += sensors[index].cost;
+            totalCoverage += sensors[index].coverage;   
+        }
     }             
 
     std::cout << "Total Cost: " << totalCost;
