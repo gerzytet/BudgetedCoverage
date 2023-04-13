@@ -5,6 +5,8 @@
 #include <set>
 #include <cmath>
 #include <chrono>
+#include <map>
+#include <unordered_map>
 
 using namespace std;
 
@@ -21,8 +23,8 @@ struct Sensor
     Sensor(int x, int y, int cost): x(x), y(y), cost(cost), coverage(0) {} // Short for this.x = x this.y = y this.cost=cost   
 };
 
-//long long nanos = chrono::steady_clock::now().time_since_epoch().count();
-minstd_rand randomGenerator(2);
+long long nanos = chrono::steady_clock::now().time_since_epoch().count();
+minstd_rand randomGenerator(nanos);
 
 int randint(int a, int b) 
 {
@@ -96,6 +98,122 @@ double calculateDistance(pair<int, int> p1, pair<int, int> p2)
     return sqrt( pow(p1.first - p2.first, 2) + pow(p1.second - p2.second, 2) );
 }
 
+vector<int> returnCoveredSensors(int index)
+{
+    vector<int> covered;    
+    for(int j = 0; j < sensors.size(); j++)
+    {
+        //Don't count coverage for the sensor itself            
+        if(index != j && calculateDistance(sensors[index], sensors[j]) < R) 
+        {                                                            
+            covered.push_back(j);                                                 
+        }
+    }        
+    return covered;
+}
+
+int countBits(int x) {
+    /*int count = 0;
+    while (x > 0) {
+        count += x & 1;
+        x >>= 1;
+    }
+    return count;*/
+    return __builtin_popcount(x);
+}
+
+namespace std
+{
+    template<typename... TTypes>
+    class hash<std::tuple<TTypes...>>
+    {
+    private:
+        typedef std::tuple<TTypes...> Tuple;
+
+        template<int N>
+        size_t operator()(Tuple value) const { return 0; }
+
+        template<int N, typename THead, typename... TTail>
+        size_t operator()(Tuple value) const
+        {
+            constexpr int Index = N - sizeof...(TTail) - 1;
+            return hash<THead>()(std::get<Index>(value)) ^ operator()<N, TTail...>(value);
+        }
+
+    public:
+        size_t operator()(Tuple value) const
+        {
+            return operator()<sizeof...(TTypes), TTypes...>(value);
+        }
+    };
+}
+
+//{{budget, j}: {items}}
+unordered_map<tuple<int, int, int>, int> cache;
+
+int recursiveSolve(int budget, int j, int mask, vector<int> &sets, vector<int> &costs, vector<int> &cumulativeSet) {
+    if (j == 0 || budget <= 0) {
+        return 0;
+    }
+    
+    mask &= cumulativeSet[j];
+    if (cache.count({budget, j, mask}) > 0) {
+        return cache[{budget, j, mask}];
+    }
+    
+    int ans = recursiveSolve(budget, j - 1, mask, sets, costs, cumulativeSet);
+    if (mask | sets[j-1] != mask) {
+        int ans2 = recursiveSolve(budget - 1, j, mask, sets, costs, cumulativeSet);
+        if (countBits(ans2 | mask) > countBits(ans | mask)) {
+            ans = ans2;
+        }
+
+        if (budget >= costs[j-1]) {
+            int ans3 = recursiveSolve(budget - costs[j-1], j - 1, mask | sets[j-1], sets, costs, cumulativeSet) | sets[j-1];
+            if (countBits(ans3 | mask) > countBits(ans | mask)) {
+                ans = ans3;
+            }
+        }
+    }
+    cache[{budget, j, mask}] = ans;
+    return ans;
+}
+
+vector<int> dynamicAlgorithm() {
+    vector<int> sets(sensors.size());
+    for (int i = 0; i < sensors.size(); i++) {
+        int s = 0;
+        vector<int> touching = returnCoveredSensors(i);
+        touching.push_back(i);
+        for (int j : touching) {
+            s |= (1 << j);
+        }
+
+        sets[i] = s;
+    }
+
+    vector<int> cumulativeSets(sensors.size() + 1);
+    cumulativeSets[0] = 0;
+    for (int i = 0; i < sensors.size(); i++) {
+        cumulativeSets[i+1] |= cumulativeSets[i] | sets[i];
+    }
+
+    vector<int> costs;
+    for (Sensor &s : sensors) {
+        costs.push_back(s.cost);
+    }
+
+    int ans = recursiveSolve(budget, sensors.size(), 0, sets, costs, cumulativeSets);
+    vector<int> chosen;
+    for (int i = 0; i < sensors.size(); i++) {
+        if ((ans & (1 << i)) > 0) {
+            chosen.push_back(i);
+        }
+    }
+
+    return chosen;
+}
+
 void calculateCoverage(set<int> covered)
 {
     for (Sensor &s : sensors) {
@@ -123,20 +241,6 @@ void calculateCoverage(set<int> covered)
 void calculateCoverage() {
     set<int> covered;
     calculateCoverage(covered);
-}
-
-vector<int> returnCoveredSensors(int index)
-{
-    vector<int> covered;    
-    for(int j = 0; j < sensors.size(); j++)
-    {
-        //Don't count coverage for the sensor itself            
-        if(index != j && calculateDistance(sensors[index], sensors[j]) < R) 
-        {                                                            
-            covered.push_back(j);                                                 
-        }
-    }        
-    return covered;
 }
 
 /*
@@ -209,16 +313,16 @@ vector<Sensor> sortSensors(vector<Sensor> s)
 
 
 
-int randomCost() 
+int randomCost(bool project2Mode) 
 {
-    return randint(250, 500);
+    return project2Mode ? randint(10, 100) : randint(250, 500);
 }
 
-void generateSensorsRandomly() 
+void generateSensorsRandomly(bool project2Mode) 
 {
     for (int i = 0; i < NUM_POINTS; i++)
     {
-        sensors.push_back(Sensor(randint(0, 100), randint(0, 100), randomCost()));
+        sensors.push_back(Sensor(randint(0, 100), randint(0, 100), randomCost(project2Mode)));
     }
 }
 
@@ -228,17 +332,18 @@ void generateSensorsUniformly()
     {
         for (int j = 0; j < 10; j++) 
         {
-            sensors.push_back(Sensor(i * 10, j * 10, randomCost()));
+            sensors.push_back(Sensor(i * 10, j * 10, randomCost(false)));
         }
     }
 }
 
 const int NEIGHBORHOODS = 4;
-void generateSensorsClustered() 
+void generateSensorsClustered(bool project2Mode) 
 {
     vector<pair<int, int>> points;
     double threshold = 40;
-    while (points.size() < NEIGHBORHOODS) 
+    int neighnborhoods = project2Mode ? 3 : NEIGHBORHOODS;
+    while (points.size() < NEIGHBORHOODS)
     {
         pair<int, int> point = make_pair(randint(0, 100), randint(0, 100));
         bool tooClose = false;
@@ -259,15 +364,40 @@ void generateSensorsClustered()
         points.push_back(point);
     }
 
+    int counter = 0;
     for (auto point : points) 
     {
-        int mean = randint(200, 400);
-        int deviation = 8;
-        for (int i = 0; i < 25; i++) 
+        counter++;
+        
+        int mean;
+        int deviation;
+        if (project2Mode) 
+        {
+            switch (counter) {
+                case 1:
+                    mean = 5;
+                    deviation = 4;
+                    break;
+                case 2:
+                    mean = 30;
+                    deviation = 10;
+                    break;
+                case 3:
+                    mean = 65;
+                    deviation = 15;
+                    break;
+            }
+        }
+        else 
+        {
+            mean = randint(200, 400);
+            deviation = 8;
+        }
+        for (int i = 0; i < (project2Mode ? 6 : 25); i++) 
         {
             int x = randint(max(point.first - 20, 0), min(point.first + 20, 100));
             int y = randint(max(point.second - 20, 0), min(point.second + 20, 100));
-            sensors.push_back(Sensor(x, y, randnormal(mean, deviation)));
+            sensors.push_back(Sensor(x, y, project2Mode ? randint(mean - deviation, mean + deviation) : randnormal(mean, deviation)));
         }
     }
 }
@@ -470,11 +600,16 @@ TrialResult runTrial(int algorithmChoice, int distributionChoice, int R_, int bu
     }
     else if(distributionChoice == 2)
     {
-        generateSensorsClustered();
+        generateSensorsClustered(false);
     }
     else if(distributionChoice == 3)
     {
-        generateSensorsRandomly();
+        generateSensorsRandomly(false);
+    }
+    else if (distributionChoice == 4) {
+        generateSensorsClustered(true);
+    } else if (distributionChoice == 5) {
+        generateSensorsRandomly(true);
     }
 
     sensors = sortSensors(sensors);    
@@ -498,7 +633,18 @@ TrialResult runTrial(int algorithmChoice, int distributionChoice, int R_, int bu
     {
         chosen = weightedAlgorithm();
         
+    } else if (algorithmChoice == 4) {
+        //time it
+        auto start = chrono::steady_clock::now();
+
+        chosen = dynamicAlgorithm();
+
+        auto end = chrono::steady_clock::now();
+        auto diff = end - start;
+        cout << chrono::duration <double, milli> (diff).count() << " ms" << endl;        
     }
+
+
     for (int index: chosen)
     {
         output << index << '\n';
@@ -536,29 +682,33 @@ void experiment() {
     ofstream output;
     output.open ("experiment_output.txt", ofstream::out | ofstream::trunc); //truncate (erase) previous contents of the output file
 
-    output << "R coverage\n";
-    output << "budget=1000 budget=3000 budget=5000\n";
+    output << "budget coverage\n";
+    output << "pure_greedy random greedy dynamic\n";
+    int budgets[] = {100, 120, 200, 250, 400};
 
-    for (int R = 5; R <= 25; R++) {
-        auto smartTrial = runTrial(3, 1, R, 1000);
-        auto smartTrial1 = runTrial(3, 1, R, 3000);
-        auto smartTrial2 = runTrial(3, 1, R, 5000);
-        output << R << ' ' << smartTrial.coveragePercent() << ' ' << smartTrial1.coveragePercent() << ' ' << smartTrial2.coveragePercent() << endl;
+    for (int i = 0; i < 5; i++) {
+        int budget  = budgets[i];
+        auto trial  = runTrial(1, 5, 5, budget);
+        auto trial1 = runTrial(2, 5, 5, budget);
+        auto trial2 = runTrial(3, 5, 5, budget);
+        auto trial3 = runTrial(4, 5, 5, budget);
+        //output << R << ' ' << smartTrial.coveragePercent() << ' ' << smartTrial1.coveragePercent() << ' ' << smartTrial2.coveragePercent() << endl;
+        output << budget << ' ' << trial.coveragePercent() << ' ' << trial1.coveragePercent() << ' ' << trial2.coveragePercent() << ' ' << trial3.coveragePercent() << endl;
     }
 }
 
 int main() 
 {
-    //experiment();
+    experiment();
     //runTrial(3, 3, 15, 2500);
     int algorithmChoice;
-    std::cout << "Which algorithm would you like to use?\n1. Greedy Algorithm\n2. Random Algorithm\n3. Budgeted Algorithm\n";        
+    std::cout << "Which algorithm would you like to use?\n1. Greedy Algorithm\n2. Random Algorithm\n3. Budgeted Algorithm\n4. Dynamic Algorithm";        
     std::cin >> algorithmChoice;
 
     cout << endl;
 
     int distributionChoice;
-    cout << "Choose a distribution\n1. Uniform\n2. Clustered\n3. Random\n";
+    cout << "Choose a distribution\n1. Uniform\n2. Clustered\n3. Random\n4. Project 2 distribution";
     cin >> distributionChoice;
 
     cout << endl;
@@ -568,8 +718,7 @@ int main()
     //     sensors.push_back(Sensor(randint(0, 100), randint(0, 100), randint(250, 500)));        
     // }
 
-    TrialResult result = runTrial(algorithmChoice, distributionChoice, 15, 10000);
-
+    TrialResult result = runTrial(algorithmChoice, distributionChoice, 5, 400);
 
     std::cout << "Total Cost: " << result.totalCost;
     std::cout << "\nTotal Coverage: " << result.coverage << ", " << result.coveragePercent() << '%' << endl;

@@ -10,7 +10,7 @@ plt.xlabel(xaxis)
 plt.ylabel(yaxis)
 algs = lines[1].split()
 keys = []
-valuess = [[], [], []]
+valuess = [[], [], [], []]
 for line in lines[2:]:
     key = float(line.split()[0])
     values = list(map(float, line.split()[1:]))
