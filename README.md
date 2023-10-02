@@ -16,6 +16,7 @@ The company must select participants in a way that maximizes the data coverage w
 - Given a budget, a set of phone sensors should be purchased that maximizes the number of unique phones covered.
 
 Below is an example of a purchased phone covering three phones, and an example of four purchased phones covering five phones.
+
 ![picture alt](https://github.com/SuperLan11/BudgetedCoverage/blob/master/Coverage1.jpeg)
 
 ![picture alt](https://github.com/SuperLan11/BudgetedCoverage/blob/master/Coverage2.jpeg)
