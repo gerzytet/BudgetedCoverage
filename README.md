@@ -1,12 +1,21 @@
-# Mini Project 1
+# Budgeted Coverage Project
 Landon Johnson,
 David Wonggant,
 A.L. Seppala,
 Craig White
 
-# Road Map:
-- Find, implement, and understand algorithm
-- Work on presentation
+# Project Overview
+The budgeted maximum coverage problem is defined as follows. A company has released a smartphone app that participants can install.
+This app allows participants to send the company pollution data, the phone's location, and a bid price.
+The company must select participants in a way that maximizes the data coverage while minimizing costs.
+
+*A 100x100 grid is used to store the locations of phone sensors. A predetermined number of phones are randomized across the grid.
+*Each phone has the same area of coverage. The coverage of each phone is given as a circle with a predetermined radius, with the phone at the center.
+*Phones are grouped into neighberhoods, some wealthier than others. The algorithm should consider if two phones have overlapping covered sensors before purchasing.
+*Phones will have different bid prices depending on the neigberhood they are in.
+*Given a budget, a set of sensors should be purchased that maximizes the number of unique sensors covered.
+
+![picture alt](https://github.com/SuperLan11/BudgetedCoverage/img)
 
 # About the plotter:
 The plotter is a python program, which plots the data using the matplotlib library.
