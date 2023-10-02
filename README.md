@@ -8,8 +8,7 @@ Craig White
 The budgeted maximum coverage problem is defined as follows. A company has released a smartphone app that participants can install.
 This app allows participants to send the company pollution data, the phone's location, and a bid price.
 The company must select participants in a way that maximizes the data coverage while minimizing costs.
-
-- A 100x100 grid is used to store the locations of phone sensors. A predetermined number of phones are randomized across the grid.
+- `A` 100x100 grid is used to store the locations of phone sensors. A predetermined number of phones are randomized across the grid.
 - The amount of area covered by each phone is the same. The coverage of each phone is given as a circle with a predetermined radius, with the phone at the center. 
 - Covered phones are those within the coverage area of a purchased phone sensor, including the purchased phone itself.
 - Phones are grouped into neighberhoods, some wealthier than others. Phones will have different bid prices depending on the neigberhood they are in.
