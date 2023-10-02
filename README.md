@@ -16,6 +16,8 @@ The company must select participants in a way that maximizes the data coverage w
 *Given a budget, a set of sensors should be purchased that maximizes the number of unique sensors covered.
 
 ![picture alt](https://github.com/SuperLan11/BudgetedCoverage/blob/master/Coverage1.jpeg)
+![picture alt](https://github.com/SuperLan11/BudgetedCoverage/blob/master/Coverage2.jpeg)
+
 
 # About the plotter:
 The plotter is a python program, which plots the data using the matplotlib library.
