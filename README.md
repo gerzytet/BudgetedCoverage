@@ -17,6 +17,16 @@ The company must select participants in a way that maximizes the data coverage w
 
 An example of a purchased sensor covering three sensors
 
+
+
+
+
+
+
+
+
+
+
 ![picture alt](https://github.com/SuperLan11/BudgetedCoverage/blob/master/Coverage1.jpeg)
 
 ![picture alt](https://github.com/SuperLan11/BudgetedCoverage/blob/master/Coverage2.jpeg)
