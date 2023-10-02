@@ -12,10 +12,10 @@ The company must select participants in a way that maximizes the data coverage w
 - The amount of area covered by each phone is the same. The coverage of each phone is given as a circle with a predetermined radius, with the phone at the center. 
 - Covered phones are those within the coverage area of a purchased phone sensor, including the purchased phone itself.
 - Phones are grouped into neighberhoods, some wealthier than others. Phones will have different bid prices depending on the neigberhood they are in.
-- The number of unique sensors covered should be maximized, so phones that overlap are undesirable.
-- Given a budget, a set of sensors should be purchased that maximizes the number of unique sensors covered.
+- The number of unique phones covered should be maximized, so phones that overlap are undesirable.
+- Given a budget, a set of phone sensors should be purchased that maximizes the number of unique phones covered.
 
-An example of a purchased sensor covering three sensors
+Below is an example of a purchased phone covering three phones, and an example of four purchased phones covering five phones.
 ![picture alt](https://github.com/SuperLan11/BudgetedCoverage/blob/master/Coverage1.jpeg)
 
 ![picture alt](https://github.com/SuperLan11/BudgetedCoverage/blob/master/Coverage2.jpeg)
