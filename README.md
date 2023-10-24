@@ -1,5 +1,5 @@
 # Budgeted Coverage Project
-Team-members: 
+Team members: 
 Landon Johnson,
 David Wonggant,
 A.L. Seppala,
