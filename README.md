@@ -17,10 +17,33 @@ Below is an example of a purchased phone covering three phones and an example of
 ![picture alt](https://github.com/SuperLan11/BudgetedCoverage/blob/master/Coverage2.jpeg)
 
 ## Team Contributions
-- Landon Johnson
-- David Wonggant
-- A.L. Seppala
-- Craig White
+- Craig White:
+  - Sensor struct
+  - random distribution functions
+  - greedyAlgorithm()
+  - countBits()
+  - namespace std manipulation
+  - recursiveSolve()
+  - dynamicAlgorithm()
+  - random sensor placement functions
+  - generateSensorsClustered()
+  - contains()
+  - calculateTotalCoverage()
+  - calculateAreaCoverage
+  - TrialResult class
+  - runTrial()
+  - experiment()
+  - Python plotter file
+- Landon Johnson:
+  - chooseSensorsRandomly()
+  - returnCoveredSensors()
+  - sortSensors()
+  - budgetAlgorithm()
+  - main()
+- A.L. Seppala:
+  - sortSensorsByWeight()
+  - weightedAlgorithm()
+- David Wonggant: Presentation Lead
 
 # About the plotter:
 The plotter is a python program, which plots the data using the matplotlib library.
