@@ -1,11 +1,5 @@
 # Budgeted Coverage Project
-Team members: 
-Landon Johnson,
-David Wonggant,
-A.L. Seppala,
-Craig White
-
-# Project Overview
+## Project Overview
 The budgeted maximum coverage problem is defined as follows. A company has released a smartphone app that participants can install.
 This app allows participants to send the company pollution data, the phone's location, and a bid price.
 The company must select participants in a way that maximizes the data coverage while minimizing costs.
@@ -22,6 +16,11 @@ Below is an example of a purchased phone covering three phones and an example of
 
 ![picture alt](https://github.com/SuperLan11/BudgetedCoverage/blob/master/Coverage2.jpeg)
 
+## Team Contributions
+- Landon Johnson
+- David Wonggant
+- A.L. Seppala
+- Craig White
 
 # About the plotter:
 The plotter is a python program, which plots the data using the matplotlib library.
