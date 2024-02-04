@@ -336,6 +336,7 @@ vector<Sensor> generateSensorsUniformly(int num_points)
         }
     }
     end:
+    //TODO: add assertion to make sure the sensors array has the right number
     return sensors;
 }
 
@@ -530,8 +531,7 @@ struct TrialResult {
 };
 
 vector<Sensor> lastSensorsUsed;
-TrialResult runTrial(int algorithmChoice, int distributionChoice, int R_, int budget_, bool regenerateSensors = false) {
-
+TrialResult runTrial(int algorithmChoice, int distributionChoice, int R_, int budget_, int num_sensors, bool regenerateSensors = false) {
     R = R_;
     budget = budget_;
     ofstream output;
@@ -545,15 +545,15 @@ TrialResult runTrial(int algorithmChoice, int distributionChoice, int R_, int bu
     if (regenerateSensors) {
         if(distributionChoice == 1)
         {
-            sensors = generateSensorsUniformly(20);
+            sensors = generateSensorsUniformly(num_sensors);
         }
         else if(distributionChoice == 2)
         {
-            sensors = generateSensorsClustered(20);
+            sensors = generateSensorsClustered(num_sensors);
         }
         else if(distributionChoice == 3)
         {
-            sensors = generateSensorsRandomly(20);
+            sensors = generateSensorsRandomly(num_sensors);
         }
         lastSensorsUsed = sensors;
     } else {
@@ -624,13 +624,14 @@ void experiment() {
     output << "budget coverage\n";
     output << "pure_greedy random greedy dynamic\n";
     int budgets[] = {100, 120, 200, 250, 400};
+    int sensors = 20;
 
     for (int i = 0; i < 5; i++) {
         int budget  = budgets[i];
-        auto trial  = runTrial(1, 2, 5, budget, true);
-        auto trial1 = runTrial(2, 2, 5, budget);
-        auto trial2 = runTrial(3, 2, 5, budget);
-        auto trial3 = runTrial(4, 2, 5, budget);
+        auto trial  = runTrial(1, 2, 5, budget, sensors, true);
+        auto trial1 = runTrial(2, 2, 5, budget, sensors);
+        auto trial2 = runTrial(3, 2, 5, budget, sensors);
+        auto trial3 = runTrial(4, 2, 5, budget, sensors);
         output << budget << ' ' << trial.coveragePercent(20) << ' ' << trial1.coveragePercent(20) << ' ' << trial2.coveragePercent(20) << ' ' << trial3.coveragePercent(20) << endl;
     }
 }
@@ -665,10 +666,10 @@ void experiment2() {
     for (int i = 0; i < sensorAmounts.size(); i++) {
         //int budget  = budgets[i];
         int points = sensorAmounts[i];
-        auto trial  = runTrial(1, 4, 5, budget, true);
-        auto trial1 = runTrial(2, 4, 5, budget);
-        auto trial2 = runTrial(3, 4, 5, budget);
-        auto trial3 = runTrial(4, 4, 5, budget);
+        auto trial  = runTrial(1, 4, 5, budget, points, true);
+        auto trial1 = runTrial(2, 4, 5, budget, points);
+        auto trial2 = runTrial(3, 4, 5, budget, points);
+        auto trial3 = runTrial(4, 4, 5, budget, points);
 
         output << budget
                << ' ' << trial.coveragePercent(points)
@@ -682,7 +683,9 @@ int main()
 {
     experiment();
     return 0;
-    //runTrial(3, 3, 15, 2500);
+
+    //This is a text based menu for running a custom trial
+    //not in use for the experiment:
     int algorithmChoice;
     std::cout << "Which algorithm would you like to use?\n1. Greedy Algorithm\n2. Random Algorithm\n3. Budgeted Algorithm\n4. Dynamic Algorithm";
     std::cin >> algorithmChoice;
@@ -700,7 +703,7 @@ int main()
     //     sensors.push_back(Sensor(randint(0, 100), randint(0, 100), randint(250, 500)));
     // }
 
-    TrialResult result = runTrial(algorithmChoice, distributionChoice, 5, 400);
+    TrialResult result = runTrial(algorithmChoice, distributionChoice, 5, 20, 400);
 
     std::cout << "Total Cost: " << result.totalCost;
     std::cout << "\nTotal Coverage: " << result.coverage << ", " << result.coveragePercent(20) << '%' << endl;
