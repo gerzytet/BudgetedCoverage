@@ -1,8 +1,15 @@
 import random
 import matplotlib.pyplot as plt
 import math
+import sys
 
-with open('output.txt') as data:
+if (len(sys.argv) > 1):
+    name = sys.argv[1]
+else:
+    name = "output.txt"
+
+print(name)
+with open(name) as data:
     lines = list(map(str.strip, data.read().split('\n')))
 
 points = []

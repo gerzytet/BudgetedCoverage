@@ -26,7 +26,7 @@ struct Sensor
 long long nanos = chrono::steady_clock::now().time_since_epoch().count();
 minstd_rand randomGenerator(nanos);
 
-int randint(int a, int b) 
+int randint(int a, int b)
 {
     uniform_int_distribution<int> distribution(a, b);
     return distribution(randomGenerator);
@@ -59,7 +59,7 @@ vector<int> chooseSensorsRandomly()
         int index = randint(0, sensors.size() - 1);
         while (chosen.count(index) != 0) 
         {
-            index = randint(0, NUM_POINTS - 1);
+            index = randint(0, sensors.size() - 1);
         }
 
         if((totalCost + sensors[index].cost) > budget)
@@ -148,12 +148,12 @@ namespace std
     };
 }
 
-//{{budget, j}: {items}}
-unordered_map<tuple<int, int, int>, int> cache;
+//{{budget, j}: {covered, chosen}}
+unordered_map<tuple<int, int, int>, pair<int, int>> cache;
 
-int recursiveSolve(int budget, int j, int mask, vector<int> &sets, vector<int> &costs, vector<int> &cumulativeSet) {
+pair<int, int> recursiveSolve(int budget, int j, int mask, vector<int> &sets, vector<int> &costs, vector<int> &cumulativeSet) {
     if (j == 0 || budget <= 0) {
-        return 0;
+        return {0, 0};
     }
     
     mask &= cumulativeSet[j];
@@ -161,16 +161,13 @@ int recursiveSolve(int budget, int j, int mask, vector<int> &sets, vector<int> &
         return cache[{budget, j, mask}];
     }
     
-    int ans = recursiveSolve(budget, j - 1, mask, sets, costs, cumulativeSet);
+    pair<int, int> ans = recursiveSolve(budget, j - 1, mask, sets, costs, cumulativeSet);
     if (mask | sets[j-1] != mask) {
-        int ans2 = recursiveSolve(budget - 1, j, mask, sets, costs, cumulativeSet);
-        if (countBits(ans2 | mask) > countBits(ans | mask)) {
-            ans = ans2;
-        }
-
         if (budget >= costs[j-1]) {
-            int ans3 = recursiveSolve(budget - costs[j-1], j - 1, mask | sets[j-1], sets, costs, cumulativeSet) | sets[j-1];
-            if (countBits(ans3 | mask) > countBits(ans | mask)) {
+            pair<int, int> ans3 = recursiveSolve(budget - costs[j-1], j - 1, mask | sets[j-1], sets, costs, cumulativeSet);
+            ans3.first |= sets[j-1];
+            ans3.second |= (1 << (j-1));
+            if (countBits(ans3.first | mask) > countBits(ans.first | mask)) {
                 ans = ans3;
             }
         }
@@ -180,6 +177,7 @@ int recursiveSolve(int budget, int j, int mask, vector<int> &sets, vector<int> &
 }
 
 vector<int> dynamicAlgorithm() {
+    cache.clear();
     vector<int> sets(sensors.size());
     for (int i = 0; i < sensors.size(); i++) {
         int s = 0;
@@ -203,14 +201,19 @@ vector<int> dynamicAlgorithm() {
         costs.push_back(s.cost);
     }
 
-    int ans = recursiveSolve(budget, sensors.size(), 0, sets, costs, cumulativeSets);
+    auto [coveredMask, chosenMask] = recursiveSolve(budget, sensors.size(), 0, sets, costs, cumulativeSets);
     vector<int> chosen;
     for (int i = 0; i < sensors.size(); i++) {
-        if ((ans & (1 << i)) > 0) {
+        if ((chosenMask & (1 << i)) > 0) {
             chosen.push_back(i);
         }
     }
 
+    int totalUsed = 0;
+    for (int i = 0; i < chosen.size(); i++) {
+        totalUsed += sensors[chosen[i]].cost;
+    }
+    cout << "Total used: " << totalUsed << " out of " << budget << endl;
     return chosen;
 }
 
@@ -320,7 +323,7 @@ int randomCost(bool project2Mode)
 
 void generateSensorsRandomly(bool project2Mode) 
 {
-    for (int i = 0; i < NUM_POINTS; i++)
+    for (int i = 0; i < (project2Mode ? 30 : NUM_POINTS); i++)
     {
         sensors.push_back(Sensor(randint(0, 100), randint(0, 100), randomCost(project2Mode)));
     }
@@ -583,33 +586,36 @@ struct TrialResult {
     TrialResult (int coverage, int areaCoverage, int totalCost) : coverage(coverage), areaCoverage(areaCoverage), totalCost(totalCost) {}
 };
 
-TrialResult runTrial(int algorithmChoice, int distributionChoice, int R_, int budget_) {
-    sensors.clear();
+TrialResult runTrial(int algorithmChoice, int distributionChoice, int R_, int budget_, bool regenerateSensors = false) {
+    
     R = R_;
     budget = budget_;
     ofstream output;
-    output.open ("output.txt", ofstream::out | ofstream::trunc); //truncate (erase) previous contents of the output file
+    output.open ("output.txt" + to_string(algorithmChoice) + "_" + to_string(distributionChoice) + "_" + to_string(budget), ofstream::out | ofstream::trunc); //truncate (erase) previous contents of the output file
     output << "Sensors:\n";
 
     int totalCost = 0;
     int totalCoverage = 0;
 
-    if(distributionChoice == 1)
-    {
-        generateSensorsUniformly();
-    }
-    else if(distributionChoice == 2)
-    {
-        generateSensorsClustered(false);
-    }
-    else if(distributionChoice == 3)
-    {
-        generateSensorsRandomly(false);
-    }
-    else if (distributionChoice == 4) {
-        generateSensorsClustered(true);
-    } else if (distributionChoice == 5) {
-        generateSensorsRandomly(true);
+    if (regenerateSensors) {
+        sensors.clear();
+        if(distributionChoice == 1)
+        {
+            generateSensorsUniformly();
+        }
+        else if(distributionChoice == 2)
+        {
+            generateSensorsClustered(false);
+        }
+        else if(distributionChoice == 3)
+        {
+            generateSensorsRandomly(false);
+        }
+        else if (distributionChoice == 4) {
+            generateSensorsClustered(true);
+        } else if (distributionChoice == 5) {
+            generateSensorsRandomly(true);
+        }
     }
 
     sensors = sortSensors(sensors);    
@@ -644,6 +650,8 @@ TrialResult runTrial(int algorithmChoice, int distributionChoice, int R_, int bu
         cout << chrono::duration <double, milli> (diff).count() << " ms" << endl;        
     }
 
+    output << endl;
+    output << "Chosen:\n";
 
     for (int index: chosen)
     {
@@ -652,9 +660,7 @@ TrialResult runTrial(int algorithmChoice, int distributionChoice, int R_, int bu
         totalCoverage += sensors[index].coverage;   
     }     
 
-    output << endl;    
-    output << "Chosen:\n";
-
+    
     output << endl;
 
     output << "R:\n";
@@ -688,10 +694,10 @@ void experiment() {
 
     for (int i = 0; i < 5; i++) {
         int budget  = budgets[i];
-        auto trial  = runTrial(1, 5, 5, budget);
-        auto trial1 = runTrial(2, 5, 5, budget);
-        auto trial2 = runTrial(3, 5, 5, budget);
-        auto trial3 = runTrial(4, 5, 5, budget);
+        auto trial  = runTrial(1, 4, 5, budget, true);
+        auto trial1 = runTrial(2, 4, 5, budget);
+        auto trial2 = runTrial(3, 4, 5, budget);
+        auto trial3 = runTrial(4, 4, 5, budget);
         //output << R << ' ' << smartTrial.coveragePercent() << ' ' << smartTrial1.coveragePercent() << ' ' << smartTrial2.coveragePercent() << endl;
         output << budget << ' ' << trial.coveragePercent() << ' ' << trial1.coveragePercent() << ' ' << trial2.coveragePercent() << ' ' << trial3.coveragePercent() << endl;
     }
