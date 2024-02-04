@@ -1,0 +1,2 @@
+list of algorithm types tested
+number of sensors, (average coverage, average performace in seconds) for each algorithm
