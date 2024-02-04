@@ -5,4 +5,5 @@
 **.pdb
 .vscode/**
 output.txt
-output.**
+outputs/**
+experiment_output.txt
