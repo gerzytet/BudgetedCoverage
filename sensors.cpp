@@ -44,9 +44,9 @@ double randnormal(double mean, double deviation) {
 }
 
 vector<Sensor> sensors;
-const int NUM_POINTS = 40;
 int R = 20;
 int budget = 10000;
+const int MAX_COORDINATE = 100;
 
 vector<int> chooseSensorsRandomly()
 {
@@ -291,6 +291,9 @@ vector<Sensor> sortSensorsByWeight(vector<Sensor> s)
 
 vector<Sensor> sortSensors(vector<Sensor> s)
 {
+    if (s.size() == 0) {
+        return s;
+    }
     //copy sensors array to new array for sorting
     vector<Sensor> sortedSensors(s);
 
@@ -314,45 +317,48 @@ vector<Sensor> sortSensors(vector<Sensor> s)
     return sortedSensors;
 }
 
-
-
-int randomCost(bool project2Mode)
+int randomCost()
 {
-    return project2Mode ? randint(10, 100) : randint(250, 500);
+    //return project2Mode ? randint(10, 100) : randint(250, 500);
+    return randint(10, 100);
 }
 
-void generateSensorsRandomly(bool project2Mode)
+void generateSensorsRandomly(int num_points)
 {
-    for (int i = 0; i < (project2Mode ? 30 : NUM_POINTS); i++)
+    for (int i = 0; i < num_points; i++)
     {
-        sensors.push_back(Sensor(randint(0, 100), randint(0, 100), randomCost(project2Mode)));
+        sensors.push_back(Sensor(randint(0, MAX_COORDINATE), randint(0, MAX_COORDINATE), randomCost()));
     }
 }
 
-void generateSensorsUniformly()
+void generateSensorsUniformly(int num_points)
 {
-    for (int i = 0; i < 10; i++)
+    int n = 0;
+    while (n * n < num_points) {
+        n++;
+    }
+    int distance = 100 / n;
+    for (int i = 0; i < n; i++)
     {
-        for (int j = 0; j < 10; j++)
+        for (int j = 0; j < n; j++)
         {
-            sensors.push_back(Sensor(i * 10, j * 10, randomCost(false)));
+            sensors.push_back(Sensor(i * distance, j * distance, randomCost()));
         }
     }
 }
 
 const int NEIGHBORHOODS = 4;
-void generateSensorsClustered(bool project2Mode)
+void generateSensorsClustered(int num_points)
 {
     vector<pair<int, int>> points;
     double threshold = 40;
-    int neighnborhoods = project2Mode ? 3 : NEIGHBORHOODS;
     while (points.size() < NEIGHBORHOODS)
     {
-        pair<int, int> point = make_pair(randint(0, 100), randint(0, 100));
+        pair<int, int> point = make_pair(randint(0, MAX_COORDINATE), randint(0, MAX_COORDINATE));
         bool tooClose = false;
         for (auto otherPoint : points)
         {
-            if (calculateDistance(point, otherPoint) < 40)
+            if (calculateDistance(point, otherPoint) < threshold)
             {
                 threshold -= 0.01;
                 tooClose = true;
@@ -367,6 +373,7 @@ void generateSensorsClustered(bool project2Mode)
         points.push_back(point);
     }
 
+    int points_per_neighborhood = num_points / NEIGHBORHOODS;
     int counter = 0;
     for (auto point : points)
     {
@@ -374,33 +381,29 @@ void generateSensorsClustered(bool project2Mode)
 
         int mean;
         int deviation;
-        if (project2Mode)
-        {
-            switch (counter) {
-                case 1:
-                    mean = 5;
-                    deviation = 4;
-                    break;
-                case 2:
-                    mean = 30;
-                    deviation = 10;
-                    break;
-                case 3:
-                    mean = 65;
-                    deviation = 15;
-                    break;
-            }
+        switch (counter) {
+            case 1:
+                mean = 5;
+                deviation = 4;
+                break;
+            case 2:
+                mean = 30;
+                deviation = 10;
+                break;
+            case 3:
+                mean = 65;
+                deviation = 15;
+                break;
+            case 4:
+                mean = 18;
+                deviation = 7;
+                break;
         }
-        else
-        {
-            mean = randint(200, 400);
-            deviation = 8;
-        }
-        for (int i = 0; i < (project2Mode ? 6 : 25); i++)
+        for (int i = 0; i < points_per_neighborhood; i++)
         {
             int x = randint(max(point.first - 20, 0), min(point.first + 20, 100));
             int y = randint(max(point.second - 20, 0), min(point.second + 20, 100));
-            sensors.push_back(Sensor(x, y, project2Mode ? randint(mean - deviation, mean + deviation) : randnormal(mean, deviation)));
+            sensors.push_back(Sensor(x, y, randnormal(mean, deviation)));
         }
     }
 }
@@ -601,20 +604,15 @@ TrialResult runTrial(int algorithmChoice, int distributionChoice, int R_, int bu
         sensors.clear();
         if(distributionChoice == 1)
         {
-            generateSensorsUniformly();
+            generateSensorsUniformly(20);
         }
         else if(distributionChoice == 2)
         {
-            generateSensorsClustered(false);
+            generateSensorsClustered(20);
         }
         else if(distributionChoice == 3)
         {
-            generateSensorsRandomly(false);
-        }
-        else if (distributionChoice == 4) {
-            generateSensorsClustered(true);
-        } else if (distributionChoice == 5) {
-            generateSensorsRandomly(true);
+            generateSensorsRandomly(20);
         }
     }
 
@@ -672,19 +670,6 @@ TrialResult runTrial(int algorithmChoice, int distributionChoice, int R_, int bu
 }
 
 void experiment() {
-    // ofstream output;
-    // output.open ("experiment_output.txt", ofstream::out | ofstream::trunc); //truncate (erase) previous contents of the output file
-
-    // output << "budget coverage\n";
-    // output << "random greedy smart\n";
-
-    // for (int budget = 500; budget <= 8000; budget += 500) {
-    //     auto randomTrial = runTrial(2, 1, 15, budget);
-    //     auto greedyTrial = runTrial(1, 1, 15, budget);
-    //     auto smartTrial = runTrial(3, 1, 15, budget);
-    //     output << budget << ' ' << randomTrial.coveragePercent() << ' ' << greedyTrial.coveragePercent() << ' ' << smartTrial.coveragePercent() << endl;
-    // }
-
     ofstream output;
     output.open ("experiment_output.txt", ofstream::out | ofstream::trunc); //truncate (erase) previous contents of the output file
 
@@ -694,11 +679,47 @@ void experiment() {
 
     for (int i = 0; i < 5; i++) {
         int budget  = budgets[i];
+        auto trial  = runTrial(1, 2, 5, budget, true);
+        auto trial1 = runTrial(2, 2, 5, budget);
+        auto trial2 = runTrial(3, 2, 5, budget);
+        auto trial3 = runTrial(4, 2, 5, budget);
+        output << budget << ' ' << trial.coveragePercent() << ' ' << trial1.coveragePercent() << ' ' << trial2.coveragePercent() << ' ' << trial3.coveragePercent() << endl;
+    }
+}
+
+/*
+goal of experiment: get high sample size data for the coverage % for a given number of sensors
+also measure performance
+
+control:
+radius
+budget
+distribution strategy (clustered)
+number of trials per sensors/algorithm choice
+
+independent:
+algorithm
+number of sensors
+
+dependent:
+performance (total for all)
+coverage (average)
+
+*/
+void experiment2() {
+    ofstream output;
+    output.open ("experiment2_output.txt", ofstream::out | ofstream::trunc); //truncate (erase) previous contents of the output file
+
+    output << "example title\n";
+    output << "pure_greedy random greedy dynamic\n";
+    int sensorAmounts[] = {20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120};
+
+    for (int i = 0; i < 5; i++) {
+        //int budget  = budgets[i];
         auto trial  = runTrial(1, 4, 5, budget, true);
         auto trial1 = runTrial(2, 4, 5, budget);
         auto trial2 = runTrial(3, 4, 5, budget);
         auto trial3 = runTrial(4, 4, 5, budget);
-        //output << R << ' ' << smartTrial.coveragePercent() << ' ' << smartTrial1.coveragePercent() << ' ' << smartTrial2.coveragePercent() << endl;
         output << budget << ' ' << trial.coveragePercent() << ' ' << trial1.coveragePercent() << ' ' << trial2.coveragePercent() << ' ' << trial3.coveragePercent() << endl;
     }
 }
@@ -715,7 +736,7 @@ int main()
     cout << endl;
 
     int distributionChoice;
-    cout << "Choose a distribution\n1. Uniform\n2. Clustered\n3. Random\n4. Project 2 distribution";
+    cout << "Choose a distribution\n1. Uniform\n2. Clustered\n3. Random";
     cin >> distributionChoice;
 
     cout << endl;
@@ -731,45 +752,3 @@ int main()
     std::cout << "\nTotal Coverage: " << result.coverage << ", " << result.coveragePercent() << '%' << endl;
     std::cout << "\nArea Coverage: " << result.areaCoverage << ", " << result.areaCoveragePercent() << '%' << endl;
 }
-
-//for (Sensor s : sensors)
-    // {
-    //     std::cout << s.cost << ' ';
-    // }
-
-// cout << "Covered Sensors for sensor at x=" << sensors[20].x << ", y=" << sensors[20].y;
-    // cout << "\n";
-    // for(int i : returnCoveredSensors(20))
-    // {
-    //     cout << "Sensor at x=" << sensors[i].x << ", y=" << sensors[i].y << "\n";
-    // }
-
-    //sensors.push_back({1,10,0});
-    // sensors.push_back({15,10,0});
-    // sensors.push_back({30,10,0});
-    // sensors.push_back({43,10,0});
-
-// std::cout << endl;
-//     int i = 0;
-//     for(Sensor s : sensors)
-//     {
-//         if(sensors[i].y == 10)
-//         std::cout << "10 y found at index: " << i << '\n';
-//         i++;
-//     }
-//     std::cout << endl << endl;
-
-//     for(int i = 0; i < 4; i++)
-//     {
-//         std::cout << "\nCoverage of sensor (" << i << ") at x=" << sensors[i].x << ", y=" << sensors[i].y
-//         << " before method: " << sensors[i].coverage;
-//     }
-//     std::cout << endl;
-
-//     processChosenSensor(1);
-//     for(int i = 0; i < 4; i++)
-//     {
-//         std::cout << "\nCoverage of sensor (" << i << ") at x=" << sensors[i].x << ", y=" << sensors[i].y
-//         << " after method: " << sensors[i].coverage;
-//     }
-//     std::cout << endl << endl;
