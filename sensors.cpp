@@ -48,11 +48,9 @@ double randnormal(double mean, double deviation) {
     return distribution(randomGenerator);
 }
 
-int R = 20;
-int budget = 10000;
 const int MAX_COORDINATE = 100;
 
-vector<int> chooseSensorsRandomly(const vector<Sensor> &sensors)
+vector<int> chooseSensorsRandomly(const vector<Sensor> &sensors, int budget, int R)
 {
     int totalCost = 0;
     set<int> chosen;
@@ -78,7 +76,7 @@ vector<int> chooseSensorsRandomly(const vector<Sensor> &sensors)
     return vector<int>(chosen.begin(), chosen.end());
 }
 
-vector<int> greedyAlgorithm(const vector<Sensor> &sensors)
+vector<int> greedyAlgorithm(const vector<Sensor> &sensors, int budget, int R)
 {
     vector<Sensor> greedySort(sensors);
     vector<int32_t> chosen;
@@ -102,7 +100,7 @@ double calculateDistance(pair<int, int> p1, pair<int, int> p2)
     return sqrt( pow(p1.first - p2.first, 2) + pow(p1.second - p2.second, 2) );
 }
 
-vector<int> returnCoveredSensors(const vector<Sensor> &sensors, int index)
+vector<int> returnCoveredSensors(const vector<Sensor> &sensors, int index, int R)
 {
     vector<int> covered;
     for(int j = 0; j < sensors.size(); j++)
@@ -182,11 +180,11 @@ pair<bs, bs> recursiveSolve(int budget, int j, bs mask, vector<bs> &sets, vector
     return ans;
 }
 
-vector<bs> calculateCoverageSets(const vector<Sensor> &sensors) {
+vector<bs> calculateCoverageSets(const vector<Sensor> &sensors, int R) {
     vector<bs> sets(sensors.size());
     for (int i = 0; i < sensors.size(); i++) {
         bs s = 0;
-        vector<int> touching = returnCoveredSensors(sensors, i);
+        vector<int> touching = returnCoveredSensors(sensors, i, R);
         touching.push_back(i);
         for (int j : touching) {
             s.set(j, true);
@@ -209,9 +207,9 @@ vector<int> bsToVector(bs mask) {
     return chosen;
 }
 
-vector<int> dynamicAlgorithm(const vector<Sensor> &sensors) {
+vector<int> dynamicAlgorithm(const vector<Sensor> &sensors, int budget, int R) {
     cache.clear();
-    vector<bs> sets = calculateCoverageSets(sensors);
+    vector<bs> sets = calculateCoverageSets(sensors, R);
 
     vector<bs> cumulativeSets(sensors.size() + 1);
     cumulativeSets[0] = 0;
@@ -236,7 +234,7 @@ vector<int> dynamicAlgorithm(const vector<Sensor> &sensors) {
     return chosen;
 }
 
-void calculateCoverage(vector<Sensor> &sensors, set<int> covered)
+void calculateCoverage(vector<Sensor> &sensors, set<int> covered, int R)
 {
     for (Sensor &s : sensors) {
         s.coverage = 0;
@@ -260,9 +258,9 @@ void calculateCoverage(vector<Sensor> &sensors, set<int> covered)
     }
 }
 
-void calculateCoverage(vector<Sensor> &sensors) {
+void calculateCoverage(vector<Sensor> &sensors, int R) {
     set<int> covered;
-    calculateCoverage(sensors, covered);
+    calculateCoverage(sensors, covered, R);
 }
 
 vector<Sensor> sortSensorsByWeight(const vector<Sensor> &s)
@@ -433,7 +431,7 @@ bool contains(vector<int> v, int find)
     return false;
 }
 
-vector<int> budgetAlgorithm(const vector<Sensor> &sensors)
+vector<int> budgetAlgorithm(const vector<Sensor> &sensors, int budget, int R)
 {
     vector<Sensor> sensorsCopy(sensors);
     vector<int> chosen;
@@ -448,7 +446,7 @@ vector<int> budgetAlgorithm(const vector<Sensor> &sensors)
     return chosen;
 }
 
-vector<int> weightedAlgorithm(vector<Sensor> &sensors)
+vector<int> weightedAlgorithm(vector<Sensor> &sensors, int budget, int R)
 {
     set<int> chosen;
     set<int> considered;
@@ -485,10 +483,10 @@ vector<int> weightedAlgorithm(vector<Sensor> &sensors)
         {
             //cout << sensors[index_maxweight].cost << ' ' << maxweight << ' ' << sensors[index_maxweight].coverage << '\n';
             chosen.insert(index_maxweight);
-            for (int i : returnCoveredSensors(sensors, index_maxweight)) {
+            for (int i : returnCoveredSensors(sensors, index_maxweight, R)) {
                 covered.insert(i);
             }
-            calculateCoverage(sensors, covered);
+            calculateCoverage(sensors, covered, R);
             totalCost += sensors[index_maxweight].cost;
         }
     }
@@ -558,7 +556,7 @@ void recursiveBruteForceSearch(
     }
 }
 
-vector<int> bruteForceAlgorithm(const vector<Sensor> &sensors) {
+vector<int> bruteForceAlgorithm(const vector<Sensor> &sensors, int budget, int R) {
     int bestCoverageCount = 0, bestRemainingBudget = 0;
     bs bestCoverage = 0;
     bs chosenMask = 0, bestChosenMask = 0;
@@ -572,17 +570,17 @@ vector<int> bruteForceAlgorithm(const vector<Sensor> &sensors) {
         bestChosenMask,
         bestRemainingBudget,
         sensors,
-        calculateCoverageSets(sensors)
+        calculateCoverageSets(sensors, R)
     );
 
     return bsToVector(bestChosenMask);
 }
 
-int calculateTotalCoverage(const vector<Sensor> &sensors, vector<int> chosen) {
+int calculateTotalCoverage(const vector<Sensor> &sensors, vector<int> chosen, int R) {
     set<int> covered;
     for (int i : chosen) {
         covered.insert(i);
-        for (int touching : returnCoveredSensors(sensors, i)) {
+        for (int touching : returnCoveredSensors(sensors, i, R)) {
             covered.insert(touching);
         }
     }
@@ -590,7 +588,7 @@ int calculateTotalCoverage(const vector<Sensor> &sensors, vector<int> chosen) {
     return covered.size();
 }
 
-int calculateAreaCoverage(const vector<int> sensors_indicies, vector<Sensor> &sensors) {
+int calculateAreaCoverage(const vector<int> sensors_indicies, vector<Sensor> &sensors, int R) {
     int coverage = 0;
     for (int x = 0; x <= 100; x++) {
         for (int y = 0; y <= 100; y++) {
@@ -654,9 +652,7 @@ vector<Sensor> generateSensors(DistributionType distributionChoice, int num_sens
 }
 
 vector<Sensor> lastSensorsUsed;
-TrialResult runTrial(AlgorithmType algorithmChoice, vector<Sensor> sensors, int R_, int budget_, string logname = "") {
-    R = R_;
-    budget = budget_;
+TrialResult runTrial(AlgorithmType algorithmChoice, vector<Sensor> sensors, int R, int budget, string logname = "") {
     bool do_output = logname != "";
     ofstream output;
 
@@ -679,30 +675,30 @@ TrialResult runTrial(AlgorithmType algorithmChoice, vector<Sensor> sensors, int 
     if(algorithmChoice == GREEDY_ALG)
     {
         sensors = sortSensors(sensors);
-        calculateCoverage(sensors);
-        chosen = greedyAlgorithm(sensors);
+        calculateCoverage(sensors, R);
+        chosen = greedyAlgorithm(sensors, budget, R);
     }
     else if(algorithmChoice == RANDOM_ALG)
     {
-        chosen = chooseSensorsRandomly(sensors);
+        chosen = chooseSensorsRandomly(sensors, budget, R);
     }
     else if(algorithmChoice == BETTER_GREEDY_ALG)
     {
         sensors = sortSensors(sensors);
-        calculateCoverage(sensors);
-        chosen = weightedAlgorithm(sensors);
+        calculateCoverage(sensors, R);
+        chosen = weightedAlgorithm(sensors, budget, R);
 
     } else if (algorithmChoice == DYNAMIC_ALG) {
         //time it
         auto start = chrono::steady_clock::now();
 
-        chosen = dynamicAlgorithm(sensors);
+        chosen = dynamicAlgorithm(sensors, budget, R);
 
         auto end = chrono::steady_clock::now();
         auto diff = end - start;
         //cout << chrono::duration <double, milli> (diff).count() << " ms" << endl;
     } else if (algorithmChoice == BRUTE_FORCE_ALG) {
-        chosen = bruteForceAlgorithm(sensors);
+        chosen = bruteForceAlgorithm(sensors, budget, R);
     }
 
     if (do_output) {
@@ -723,13 +719,13 @@ TrialResult runTrial(AlgorithmType algorithmChoice, vector<Sensor> sensors, int 
         output << R << '\n';
     }
 
-    int area = calculateAreaCoverage(chosen, sensors);
+    int area = calculateAreaCoverage(chosen, sensors, R);
     int totalSpent = 0;
     for (int i : chosen) {
         totalSpent += sensors[i].cost;
     }
 
-    return TrialResult(calculateTotalCoverage(sensors, chosen), calculateAreaCoverage(chosen, sensors), totalCost, totalSpent);
+    return TrialResult(calculateTotalCoverage(sensors, chosen, R), calculateAreaCoverage(chosen, sensors, R), totalCost, totalSpent);
 }
 
 void experiment() {
@@ -780,7 +776,7 @@ void experiment2() {
     vector<int> sensorAmounts = {20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120};
 
     for (int i = 0; i < sensorAmounts.size(); i++) {
-        //int budget  = budgets[i];
+        int budget  = 10000;
         int points = sensorAmounts[i];
         vector<Sensor> sensors = generateSensors(CLUSTERED, points, i);
         auto trial  = runTrial(GREEDY_ALG, sensors, 5, budget);
