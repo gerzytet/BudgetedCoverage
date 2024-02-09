@@ -1,54 +1,6 @@
-#include <iostream>
-#include <random>
-#include <iomanip>
-#include <fstream>
-#include <set>
-#include <cmath>
-#include <chrono>
-#include <map>
-#include <unordered_map>
-#include <bitset>
-
-using namespace std;
-
-//To run this file in VS Code
-//Open Developer console
-//Type code -> enter
-
-//Struct variables are public by default instead of private
-struct Sensor
-{
-    int x, y, cost, coverage; //coverage: the number of other sensors within the current circle
-    double weight;
-    int i;
-
-    Sensor(int x, int y, int cost, int i): x(x), y(y), cost(cost), coverage(0), i(i) {} // Short for this.x = x this.y = y this.cost=cost
-};
-
-long long nanos = chrono::steady_clock::now().time_since_epoch().count();
-minstd_rand randomGenerator(nanos);
-void seedRandom(int seed) {
-    randomGenerator.seed(seed);
-}
-
-int randint(int a, int b)
-{
-    uniform_int_distribution<int> distribution(a, b);
-    return distribution(randomGenerator);
-}
-
-double randfloat(double a, double b)
-{
-    uniform_real_distribution<double> distribution(a, b);
-    return distribution(randomGenerator);
-}
-
-double randnormal(double mean, double deviation) {
-    normal_distribution<double> distribution(mean, deviation);
-    return distribution(randomGenerator);
-}
-
-const int MAX_COORDINATE = 100;
+#include "common.hpp"
+#include "sensor_generators.hpp"
+#include "random_utils.hpp"
 
 vector<int> chooseSensorsRandomly(const vector<Sensor> &sensors, int budget, int R)
 {
@@ -88,16 +40,6 @@ vector<int> greedyAlgorithm(const vector<Sensor> &sensors, int budget, int R)
         chosen.push_back(i);
     }
     return chosen;
-}
-
-double calculateDistance(Sensor s1, Sensor s2)
-{
-    return sqrt( pow(s2.x - s1.x, 2) + pow(s2.y - s1.y, 2) );
-}
-
-double calculateDistance(pair<int, int> p1, pair<int, int> p2)
-{
-    return sqrt( pow(p1.first - p2.first, 2) + pow(p1.second - p2.second, 2) );
 }
 
 vector<int> returnCoveredSensors(const vector<Sensor> &sensors, int index, int R)
@@ -316,111 +258,6 @@ vector<Sensor> sortSensors(const vector<Sensor> &s)
     return sortedSensors;
 }
 
-int randomCost()
-{
-    //return project2Mode ? randint(10, 100) : randint(250, 500);
-    return randint(10, 100);
-}
-
-vector<Sensor> generateSensorsRandomly(int num_points)
-{
-    vector<Sensor> sensors;
-    for (int i = 0; i < num_points; i++)
-    {
-        sensors.push_back(Sensor(randint(0, MAX_COORDINATE), randint(0, MAX_COORDINATE), randomCost(), i));
-    }
-    return sensors;
-}
-
-vector<Sensor> generateSensorsUniformly(int num_points)
-{
-    vector<Sensor> sensors;
-    int n = 0;
-    while (n * n < num_points) {
-        n++;
-    }
-    int distance = 100 / n;
-    int count = 0;
-    for (int i = 0; i < n; i++)
-    {
-        for (int j = 0; j < n; j++)
-        {
-            sensors.push_back(Sensor(i * distance, j * distance, randomCost(), count));
-            count++;
-            if (count >= num_points) {
-                goto end;
-            }
-        }
-    }
-    end:
-    //TODO: add assertion to make sure the sensors array has the right number
-    return sensors;
-}
-
-const int NEIGHBORHOODS = 4;
-vector<Sensor> generateSensorsClustered(int num_points)
-{
-    vector<Sensor> sensors;
-    vector<pair<int, int>> points;
-    double threshold = 40;
-    while (points.size() < NEIGHBORHOODS)
-    {
-        pair<int, int> point = make_pair(randint(0, MAX_COORDINATE), randint(0, MAX_COORDINATE));
-        bool tooClose = false;
-        for (auto otherPoint : points)
-        {
-            if (calculateDistance(point, otherPoint) < threshold)
-            {
-                threshold -= 0.01;
-                tooClose = true;
-                break;
-            }
-        }
-
-        if (tooClose)
-        {
-            continue;
-        }
-        points.push_back(point);
-    }
-
-    int points_per_neighborhood = num_points / NEIGHBORHOODS;
-    int counter = 0;
-    for (auto point : points)
-    {
-        counter++;
-
-        int mean;
-        int deviation;
-        switch (counter) {
-            case 1:
-                mean = 5;
-                deviation = 4;
-                break;
-            case 2:
-                mean = 30;
-                deviation = 10;
-                break;
-            case 3:
-                mean = 65;
-                deviation = 15;
-                break;
-            case 4:
-                mean = 18;
-                deviation = 7;
-                break;
-        }
-        for (int i = 0; i < points_per_neighborhood; i++)
-        {
-            int x = randint(max(point.first - 20, 0), min(point.first + 20, 100));
-            int y = randint(max(point.second - 20, 0), min(point.second + 20, 100));
-            sensors.push_back(Sensor(x, y, randnormal(mean, deviation), i));
-        }
-    }
-
-    return sensors;
-}
-
 bool contains(vector<int> v, int find)
 {
     for(int i = 0; i < v.size(); i++)
@@ -624,10 +461,6 @@ struct TrialResult {
     TrialResult (int coverage, int areaCoverage, int totalCost, int budgetSpent) : coverage(coverage), areaCoverage(areaCoverage), totalCost(totalCost), budgetSpent(budgetSpent) {}
 };
 
-enum DistributionType {
-    UNIFORM = 1, CLUSTERED = 2, RANDOM = 3
-};
-
 enum AlgorithmType {
     GREEDY_ALG = 1, RANDOM_ALG = 2, BETTER_GREEDY_ALG = 3, DYNAMIC_ALG = 4, BRUTE_FORCE_ALG = 5
 };
@@ -690,11 +523,11 @@ TrialResult runTrial(AlgorithmType algorithmChoice, vector<Sensor> sensors, int 
 
     } else if (algorithmChoice == DYNAMIC_ALG) {
         //time it
-        auto start = chrono::steady_clock::now();
+        auto start = std::chrono::steady_clock::now();
 
         chosen = dynamicAlgorithm(sensors, budget, R);
 
-        auto end = chrono::steady_clock::now();
+        auto end = std::chrono::steady_clock::now();
         auto diff = end - start;
         //cout << chrono::duration <double, milli> (diff).count() << " ms" << endl;
     } else if (algorithmChoice == BRUTE_FORCE_ALG) {
