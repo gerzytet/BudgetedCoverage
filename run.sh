@@ -1,2 +1,2 @@
-g++ sensors.cpp -o sensors
+make sensors
 ./sensors

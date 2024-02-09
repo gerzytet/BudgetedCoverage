@@ -7,3 +7,4 @@
 output.txt
 outputs/**
 experiment_output.txt
+*.o
