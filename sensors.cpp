@@ -78,6 +78,7 @@ struct TrialResult {
     int areaCoverage;
     int totalCost;
     int budgetSpent;
+    int ms;
 
     double coveragePercent(int total_sensors) {
         return ((double) coverage / total_sensors);
@@ -87,7 +88,7 @@ struct TrialResult {
         return ((double) areaCoverage / (101 * 101));
     }
 
-    TrialResult (int coverage, int areaCoverage, int totalCost, int budgetSpent) : coverage(coverage), areaCoverage(areaCoverage), totalCost(totalCost), budgetSpent(budgetSpent) {}
+    TrialResult (int coverage, int areaCoverage, int totalCost, int budgetSpent, int ms) : coverage(coverage), areaCoverage(areaCoverage), totalCost(totalCost), budgetSpent(budgetSpent), ms(ms) {}
 };
 
 enum AlgorithmType {
@@ -133,6 +134,7 @@ TrialResult runTrial(AlgorithmType algorithmChoice, vector<Sensor> sensors, int 
         }
     }
 
+    auto start = std::chrono::steady_clock::now();
     vector<int> chosen;
     if(algorithmChoice == GREEDY_ALG)
     {
@@ -151,17 +153,13 @@ TrialResult runTrial(AlgorithmType algorithmChoice, vector<Sensor> sensors, int 
         chosen = weightedAlgorithm(sensors, budget, R);
 
     } else if (algorithmChoice == DYNAMIC_ALG) {
-        //time it
-        auto start = std::chrono::steady_clock::now();
-
         chosen = dynamicAlgorithm(sensors, budget, R);
-
-        auto end = std::chrono::steady_clock::now();
-        auto diff = end - start;
-        //cout << chrono::duration <double, milli> (diff).count() << " ms" << endl;
     } else if (algorithmChoice == BRUTE_FORCE_ALG) {
         chosen = bruteForceAlgorithm(sensors, budget, R);
     }
+    auto end = std::chrono::steady_clock::now();
+    auto diff = end - start;
+    int ms = std::chrono::duration<double, std::milli>(diff).count();
 
     if (do_output) {
         output << endl;
@@ -187,7 +185,8 @@ TrialResult runTrial(AlgorithmType algorithmChoice, vector<Sensor> sensors, int 
         totalSpent += sensors[i].cost;
     }
 
-    return TrialResult(calculateTotalCoverage(sensors, chosen, R), calculateAreaCoverage(chosen, sensors, R), totalCost, totalSpent);
+
+    return TrialResult(calculateTotalCoverage(sensors, chosen, R), calculateAreaCoverage(chosen, sensors, R), totalCost, totalSpent, ms);
 }
 
 void experiment() {
@@ -254,7 +253,7 @@ void experiment2() {
     }
 }
 
-void proveDynamicOptimalExperiment() {
+void compareDynamicBruteforce() {
     int outperform = 0;
     for (int i = 0; i < 100; i++) {
         vector<Sensor> sensors = generateSensors(RANDOM, 30, i);
@@ -286,9 +285,52 @@ void proveDynamicOptimalExperiment() {
     cout << "outperformed in budget on " << outperform << " trials.\n";
 }
 
+void compateAlgorithms() {
+    ofstream output;
+    output.open("algorithm_comparison.csv");
+    output << "algorithm,coverage,time,cost per coverage unit\n";
+    const int R = 15;
+    const int budget = 450;
+
+    auto printTrial = [&](string name, TrialResult result) {
+        output << name << ',';
+        output << result.coverage << ',';
+        output << result.ms << ',';
+        double coveragePerDollar = ((double)result.budgetSpent / result.coverage);
+        output << coveragePerDollar << '\n';
+    };
+    for (int i = 0; i < 200; i++) {
+        vector<Sensor> sensors = generateSensors(RANDOM, 30, i);
+        printTrial("dynamic", runTrial(
+            DYNAMIC_ALG,
+            sensors,
+            R,
+            budget,
+            "dynamic_" + to_string(i+1)
+        ));
+        printTrial("brute_force", runTrial(
+            BRUTE_FORCE_ALG,
+            sensors,
+            R,
+            budget,
+            "brute_force_" + to_string(i+1)
+        ));
+        printTrial("greedy", runTrial(
+            BETTER_GREEDY_ALG,
+            sensors,
+            R,
+            budget,
+            "greedy_" + to_string(i+1)
+        ));
+        cout << "Trial " << i+1 << "\n";
+
+    }
+    output.close();
+}
+
 int main()
 {
-    experiment();
+    compateAlgorithms();
     return 0;
 
     //This is a text based menu for running a custom trial
@@ -304,11 +346,6 @@ int main()
     cin >> distributionChoice;
 
     cout << endl;
-
-    // for (int i = 0; i < NUM_POINTS; i++)
-    // {
-    //     sensors.push_back(Sensor(randint(0, 100), randint(0, 100), randint(250, 500)));
-    // }
 
     TrialResult result = runTrial((AlgorithmType)algorithmChoice, generateSensors((DistributionType)distributionChoice, 20, randint(1, 100000)), 5, 400);
 
