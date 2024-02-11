@@ -10,6 +10,7 @@
 #include <map>
 #include <unordered_map>
 #include <bitset>
+#include <algorithm>
 
 using std::vector;
 using std::bitset;
@@ -31,6 +32,7 @@ using std::make_pair;
 using std::max;
 using std::min;
 using std::string;
+using std::sort;
 
 //Struct variables are public by default instead of private
 struct Sensor

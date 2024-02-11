@@ -205,12 +205,17 @@ void calculateCoverage(vector<Sensor> &sensors, int R) {
     calculateCoverage(sensors, covered, R);
 }
 
+bool weightComparator(Sensor a, Sensor b) {
+    return a.weight < b.weight;
+}
+
 vector<Sensor> sortSensorsByWeight(const vector<Sensor> &s)
 {
-    //copy sensors array to new array for sorting
     vector<Sensor> sortedSensors(s);
+    sort(sortedSensors.begin(), sortedSensors.end(), weightComparator);
+    return sortedSensors;
 
-    //selection sort
+    /*//selection sort
     int i, j, max_idx;
     for(int i = 0; i < sortedSensors.size()-1; i++)
     {
@@ -227,7 +232,7 @@ vector<Sensor> sortSensorsByWeight(const vector<Sensor> &s)
             swap(sortedSensors[max_idx], sortedSensors[i]);
         }
     }
-    return sortedSensors;
+    return sortedSensors;*/
 }
 
 vector<Sensor> sortSensors(const vector<Sensor> &s)
@@ -659,7 +664,7 @@ void proveDynamicOptimalExperiment() {
 
 int main()
 {
-    proveDynamicOptimalExperiment();
+    experiment();
     return 0;
 
     //This is a text based menu for running a custom trial
