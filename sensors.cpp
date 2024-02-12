@@ -285,6 +285,50 @@ void compareDynamicBruteforce() {
     cout << "outperformed in budget on " << outperform << " trials.\n";
 }
 
+void measureCoverageVsBudget() {
+    ofstream output;
+    output.open("coverage_vs_budget.csv");
+    output << "algorithm,budget,coverage,cost per coverage unit\n";
+    const int R = 15;
+
+    auto printTrial = [&](string name, TrialResult result, int budget) {
+        output << name << ',';
+        output << budget << ',';
+        output << result.coverage << ',';
+        double coveragePerDollar = ((double)result.budgetSpent / result.coverage);
+        output << coveragePerDollar << '\n';
+    };
+    for (int budget = 20; budget < 600; budget += 20) {
+        for (int i = 0; i < 200; i++) {
+            vector<Sensor> sensors = generateSensors(RANDOM, 30, i);
+            printTrial("dynamic", runTrial(
+                DYNAMIC_ALG,
+                sensors,
+                R,
+                budget,
+                "dynamic_" + to_string(i+1)
+            ), budget);
+            printTrial("brute_force", runTrial(
+                BRUTE_FORCE_ALG,
+                sensors,
+                R,
+                budget,
+                "brute_force_" + to_string(i+1)
+            ), budget);
+            printTrial("greedy", runTrial(
+                BETTER_GREEDY_ALG,
+                sensors,
+                R,
+                budget,
+                "greedy_" + to_string(i+1)
+            ), budget);
+            cout << "Budget " << budget << " Trial " << i+1 << "\n";
+
+        }
+    }
+    output.close();
+}
+
 void compateAlgorithms() {
     ofstream output;
     output.open("algorithm_comparison.csv");
@@ -330,7 +374,7 @@ void compateAlgorithms() {
 
 int main()
 {
-    compateAlgorithms();
+    measureCoverageVsBudget();
     return 0;
 
     //This is a text based menu for running a custom trial
