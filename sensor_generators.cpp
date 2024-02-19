@@ -78,31 +78,45 @@ vector<Sensor> generateSensorsClustered(int num_points)
     {
         counter++;
 
-        int mean;
-        int deviation;
+        int costMean;
+        int costDeviation;
         switch (counter) {
             case 1:
-                mean = 5;
-                deviation = 4;
+                costMean = 5;
+                costDeviation = 4;
                 break;
             case 2:
-                mean = 30;
-                deviation = 10;
+                costMean = 30;
+                costDeviation = 10;
                 break;
             case 3:
-                mean = 65;
-                deviation = 15;
+                costMean = 65;
+                costDeviation = 15;
                 break;
             case 4:
-                mean = 18;
-                deviation = 7;
+                costMean = 18;
+                costDeviation = 7;
                 break;
         }
         for (int i = 0; i < points_per_neighborhood; i++)
         {
-            int x = randint(max(point.first - 20, 0), min(point.first + 20, 100));
-            int y = randint(max(point.second - 20, 0), min(point.second + 20, 100));
-            sensors.push_back(Sensor(x, y, randnormal(mean, deviation), i));
+            int x = -1;
+            int mean = point.first;
+            int deviation = 15;
+            while (x < 0 || x > 100) {
+                x = randnormal(mean, deviation);
+            }
+            int y = -1;
+            mean = point.second;
+            while (y < 0 || y > 100) {
+                y = randnormal(mean, deviation);
+            }
+            int cost = -1;
+            while (cost < 0) {
+                cost = randnormal(costMean, costDeviation);
+            }
+
+            sensors.push_back(Sensor(x, y, cost, i));
         }
     }
 

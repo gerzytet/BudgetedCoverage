@@ -155,7 +155,6 @@ vector<int> budgetAlgorithm(const vector<Sensor> &sensors, int budget, int R)
     vector<Sensor> sensorsCopy(sensors);
     vector<int> chosen;
     int totalCost = 0;
-    vector< vector<int> > universe;
 
     for (int i = 0; i < sensorsCopy.size() && (totalCost + sensorsCopy[i].cost) <= budget; ++i)
     {
@@ -198,13 +197,14 @@ vector<int> weightedAlgorithm(vector<Sensor> &sensors, int budget, int R)
         }
 
         considered.insert(index_maxweight);
-        if (totalCost + sensors[index_maxweight].cost < budget)
+        if (totalCost + sensors[index_maxweight].cost <= budget)
         {
             //cout << sensors[index_maxweight].cost << ' ' << maxweight << ' ' << sensors[index_maxweight].coverage << '\n';
             chosen.insert(index_maxweight);
             for (int i : returnCoveredSensors(sensors, index_maxweight, R)) {
                 covered.insert(i);
             }
+            covered.insert(index_maxweight);
             calculateCoverage(sensors, covered, R);
             totalCost += sensors[index_maxweight].cost;
         }
@@ -217,6 +217,96 @@ vector<int> weightedAlgorithm(vector<Sensor> &sensors, int budget, int R)
     else
         return ;*/
 
+}
+
+//code to choose all k combinations of n elements takes from here:
+//https://stackoverflow.com/questions/12991758/creating-all-possible-k-combinations-of-n-items-in-c
+
+
+vector<int> kGreedyAlgorithm(vector<Sensor> &sensors, int budget, int R, int k)
+{
+    string bitmask(k, 1); // K leading 1's
+    bitmask.resize(sensors.size(), 0); // N-K trailing 0's
+    bool firstNextCombinationCall = false;
+
+    auto getNextCombination = [&](){
+        vector<Sensor> ans;
+        if (firstNextCombinationCall || std::prev_permutation(bitmask.begin(), bitmask.end())) {
+            for (int i = 0; i < sensors.size(); ++i) // [0..N-1] integers
+            {
+                if (bitmask[i]) ans.push_back(sensors[i]);
+            }
+        }
+        return ans;
+    };
+
+    set<int> bestChosen;
+    int bestCoverage = 0;
+    int bestCost = 0;
+    while (true) {
+        set<int> chosen;
+        set<int> considered;
+        set<int> covered;
+        int totalCost = 0;
+
+        auto chooseSensor = [&](int index) {
+            //cout << sensors[index_maxweight].cost << ' ' << maxweight << ' ' << sensors[index_maxweight].coverage << '\n';
+            chosen.insert(index);
+            for (int i : returnCoveredSensors(sensors, index, R)) {
+                covered.insert(i);
+            }
+            covered.insert(index);
+            calculateCoverage(sensors, covered, R);
+            totalCost += sensors[index].cost;
+        };
+
+        vector<Sensor> baseChosen = getNextCombination();
+        if (baseChosen.size() == 0) {
+            break;
+        }
+        for (Sensor &s : baseChosen) {
+            if (s.cost + totalCost <= budget) {
+                chooseSensor(s.i);
+            }
+        }
+
+        while (considered.size() < sensors.size())
+        {
+            //get element with max weight
+            int index_maxweight = -1;
+            double maxweight = 0;
+            for (int i = 0; i < sensors.size(); ++i)
+            {
+                if (considered.count(i) != 0) {
+                    continue;
+                }
+
+                if ((((double)sensors[i].coverage) / ((double)sensors[i].cost)) > maxweight)
+                {
+                    index_maxweight = i;
+                    maxweight = (((double)sensors[i].coverage) / ((double)sensors[i].cost));
+                }
+            }
+
+            if (index_maxweight == -1) {
+                break;
+            }
+
+            considered.insert(index_maxweight);
+            if (totalCost + sensors[index_maxweight].cost <= budget)
+            {
+                chooseSensor(index_maxweight);
+            }
+        }
+
+        if (covered.size() > bestCoverage || (covered.size() == bestCoverage && totalCost < bestCost)) {
+            bestChosen = chosen;
+            bestCost = totalCost;
+            bestCoverage = covered.size();
+        }
+    }
+
+    return vector<int>(bestChosen.begin(), bestChosen.end());
 }
 
 void recursiveBruteForceSearch(

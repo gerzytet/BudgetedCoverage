@@ -77,7 +77,6 @@ struct TrialResult {
     int coverage;
     int areaCoverage;
     int totalCost;
-    int budgetSpent;
     int ms;
 
     double coveragePercent(int total_sensors) {
@@ -88,12 +87,25 @@ struct TrialResult {
         return ((double) areaCoverage / (101 * 101));
     }
 
-    TrialResult (int coverage, int areaCoverage, int totalCost, int budgetSpent, int ms) : coverage(coverage), areaCoverage(areaCoverage), totalCost(totalCost), budgetSpent(budgetSpent), ms(ms) {}
+    TrialResult (int coverage, int areaCoverage, int totalCost, int ms) : coverage(coverage), areaCoverage(areaCoverage), totalCost(totalCost), ms(ms) {}
 };
 
 enum AlgorithmType {
-    GREEDY_ALG = 1, RANDOM_ALG = 2, BETTER_GREEDY_ALG = 3, DYNAMIC_ALG = 4, BRUTE_FORCE_ALG = 5
+    GREEDY_ALG_TYPE = 1, RANDOM_ALG_TYPE = 2, BETTER_GREEDY_ALG_TYPE = 3, DYNAMIC_ALG_TYPE = 4, BRUTE_FORCE_ALG_TYPE = 5, K_GREEDY_ALG_TYPE = 6
 };
+
+struct AlgorithmInfo {
+    AlgorithmType algType;
+    int k; //only used for type 6
+
+    AlgorithmInfo(AlgorithmType algType, int k) : algType(algType), k(k) {}
+};
+
+AlgorithmInfo GREEDY_ALG(GREEDY_ALG_TYPE, 0);
+AlgorithmInfo RANDOM_ALG(RANDOM_ALG_TYPE, 0);
+AlgorithmInfo BETTER_GREEDY_ALG(BETTER_GREEDY_ALG_TYPE, 0);
+AlgorithmInfo DYNAMIC_ALG(DYNAMIC_ALG_TYPE, 0);
+AlgorithmInfo BRUTE_FORCE_ALG(BRUTE_FORCE_ALG_TYPE, 0);
 
 vector<Sensor> generateSensors(DistributionType distributionChoice, int num_sensors, int seed) {
     vector<Sensor> sensors;
@@ -115,7 +127,7 @@ vector<Sensor> generateSensors(DistributionType distributionChoice, int num_sens
 }
 
 vector<Sensor> lastSensorsUsed;
-TrialResult runTrial(AlgorithmType algorithmChoice, vector<Sensor> sensors, int R, int budget, string logname = "") {
+TrialResult runTrial(AlgorithmInfo algorithmInfo, vector<Sensor> sensors, int R, int budget, string logname = "") {
     bool do_output = logname != "";
     ofstream output;
 
@@ -124,7 +136,6 @@ TrialResult runTrial(AlgorithmType algorithmChoice, vector<Sensor> sensors, int 
         output << "Sensors:\n";
     }
 
-    int totalCost = 0;
     int totalCoverage = 0;
 
     if (do_output) {
@@ -136,26 +147,29 @@ TrialResult runTrial(AlgorithmType algorithmChoice, vector<Sensor> sensors, int 
 
     auto start = std::chrono::steady_clock::now();
     vector<int> chosen;
-    if(algorithmChoice == GREEDY_ALG)
+    AlgorithmType algorithmChoice = algorithmInfo.algType;
+    if(algorithmChoice == GREEDY_ALG_TYPE)
     {
         sensors = sortSensors(sensors);
         calculateCoverage(sensors, R);
         chosen = greedyAlgorithm(sensors, budget, R);
     }
-    else if(algorithmChoice == RANDOM_ALG)
+    else if(algorithmChoice == RANDOM_ALG_TYPE)
     {
         chosen = chooseSensorsRandomly(sensors, budget, R);
     }
-    else if(algorithmChoice == BETTER_GREEDY_ALG)
+    else if(algorithmChoice == BETTER_GREEDY_ALG_TYPE)
     {
         sensors = sortSensors(sensors);
         calculateCoverage(sensors, R);
         chosen = weightedAlgorithm(sensors, budget, R);
 
-    } else if (algorithmChoice == DYNAMIC_ALG) {
+    } else if (algorithmChoice == DYNAMIC_ALG_TYPE) {
         chosen = dynamicAlgorithm(sensors, budget, R);
-    } else if (algorithmChoice == BRUTE_FORCE_ALG) {
+    } else if (algorithmChoice == BRUTE_FORCE_ALG_TYPE) {
         chosen = bruteForceAlgorithm(sensors, budget, R);
+    } else if (algorithmChoice == K_GREEDY_ALG_TYPE) {
+        chosen = kGreedyAlgorithm(sensors, budget, R, algorithmInfo.k);
     }
     auto end = std::chrono::steady_clock::now();
     auto diff = end - start;
@@ -168,7 +182,6 @@ TrialResult runTrial(AlgorithmType algorithmChoice, vector<Sensor> sensors, int 
         for (int index: chosen)
         {
             output << index << '\n';
-            totalCost += sensors[index].cost;
             totalCoverage += sensors[index].coverage;
         }
 
@@ -177,16 +190,17 @@ TrialResult runTrial(AlgorithmType algorithmChoice, vector<Sensor> sensors, int 
 
         output << "R:\n";
         output << R << '\n';
+
+        output.close();
     }
 
     int area = calculateAreaCoverage(chosen, sensors, R);
-    int totalSpent = 0;
+    int totalCost = 0;
     for (int i : chosen) {
-        totalSpent += sensors[i].cost;
+        totalCost += sensors[i].cost;
     }
 
-
-    return TrialResult(calculateTotalCoverage(sensors, chosen, R), calculateAreaCoverage(chosen, sensors, R), totalCost, totalSpent, ms);
+    return TrialResult(calculateTotalCoverage(sensors, chosen, R), calculateAreaCoverage(chosen, sensors, R), totalCost, ms);
 }
 
 void experiment() {
@@ -256,7 +270,7 @@ void experiment2() {
 void compareDynamicBruteforce() {
     int outperform = 0;
     for (int i = 0; i < 100; i++) {
-        vector<Sensor> sensors = generateSensors(RANDOM, 30, i);
+        vector<Sensor> sensors = generateSensors(CLUSTERED, 30, i);
         auto dynamicTrial = runTrial(
             DYNAMIC_ALG,
             sensors,
@@ -273,12 +287,12 @@ void compareDynamicBruteforce() {
         );
         cout << "Trial " << i+1 << ": ";
         cout << "Dynamic coverage: " << dynamicTrial.coverage << " Brute force coverage: " << bruteTrial.coverage << '\n';
-        cout << "Dynamic spent: " << dynamicTrial.budgetSpent << " Brute force spent: " << bruteTrial.budgetSpent << '\n';
+        cout << "Dynamic spent: " << dynamicTrial.totalCost << " Brute force spent: " << bruteTrial.totalCost << '\n';
 
-        if (dynamicTrial.coverage != bruteTrial.coverage || dynamicTrial.budgetSpent < bruteTrial.budgetSpent) {
+        if (dynamicTrial.coverage != bruteTrial.coverage || dynamicTrial.totalCost < bruteTrial.totalCost) {
             cout << "MISMATCH\n";
         }
-        if (dynamicTrial.budgetSpent > bruteTrial.budgetSpent) {
+        if (dynamicTrial.totalCost > bruteTrial.totalCost) {
             outperform++;
         }
     }
@@ -295,7 +309,7 @@ void measureCoverageVsBudget() {
         output << name << ',';
         output << budget << ',';
         output << result.coverage << ',';
-        double coveragePerDollar = ((double)result.budgetSpent / result.coverage);
+        double coveragePerDollar = ((double)result.totalCost / result.coverage);
         output << coveragePerDollar << '\n';
     };
     for (int budget = 20; budget < 600; budget += 20) {
@@ -340,7 +354,7 @@ void compateAlgorithms() {
         output << name << ',';
         output << result.coverage << ',';
         output << result.ms << ',';
-        double coveragePerDollar = ((double)result.budgetSpent / result.coverage);
+        double coveragePerDollar = ((double)result.totalCost / result.coverage);
         output << coveragePerDollar << '\n';
     };
     for (int i = 0; i < 200; i++) {
@@ -372,9 +386,76 @@ void compateAlgorithms() {
     output.close();
 }
 
+void measureCoverageVsBudget2() {
+    ofstream output;
+    output.open("coverage_vs_budget_2.csv");
+    output << "algorithm,budget,coverage,cost per coverage unit,time\n";
+    const int R = 15;
+
+    auto printTrial = [&](string name, TrialResult result, int budget) {
+        output << name << ',';
+        output << budget << ',';
+        output << result.coverage << ',';
+        double coveragePerDollar = result.totalCost;//((double)result.budgetSpent / result.coverage);
+        output << coveragePerDollar << '\n';
+        output << result.ms << '\n';
+    };
+    for (int budget = 480; budget < 600; budget += 40) {
+        for (int i = 0; i < 100; i++) {
+            vector<Sensor> sensors = generateSensors(CLUSTERED, 60, i*budget);
+            printTrial("dynamic", runTrial(
+                DYNAMIC_ALG,
+                sensors,
+                R,
+                budget,
+                "dynamic_" + to_string(i+1)
+            ), budget);
+            printTrial("greedy", runTrial(
+                BETTER_GREEDY_ALG,
+                sensors,
+                R,
+                budget,
+                "greedy_" + to_string(i+1)
+            ), budget);
+            printTrial("random", runTrial(
+                RANDOM_ALG,
+                sensors,
+                R,
+                budget,
+                "random_" + to_string(i+1)
+            ), budget);
+            printTrial("bad_greedy", runTrial(
+                GREEDY_ALG,
+                sensors,
+                R,
+                budget,
+                "bad_greedy_" + to_string(i+1)
+            ), budget);
+            printTrial("k=1", runTrial(
+                AlgorithmInfo(K_GREEDY_ALG_TYPE, 1),
+                sensors,
+                R,
+                budget,
+                "k1_" + to_string(i+1)
+            ), budget);
+            printTrial("k=2", runTrial(
+                AlgorithmInfo(K_GREEDY_ALG_TYPE, 2),
+                sensors,
+                R,
+                budget,
+                "k2_" + to_string(i+1)
+            ), budget);
+            cout << "Budget " << budget << " Trial " << i+1 << "\n";
+
+        }
+    }
+    output.close();
+}
+
 int main()
 {
-    measureCoverageVsBudget();
+    measureCoverageVsBudget2();
+    //runTrial(DYNAMIC_ALG, generateSensors(CLUSTERED, 75, 0), 15, 500, "dynamic_test");
     return 0;
 
     //This is a text based menu for running a custom trial
@@ -391,7 +472,7 @@ int main()
 
     cout << endl;
 
-    TrialResult result = runTrial((AlgorithmType)algorithmChoice, generateSensors((DistributionType)distributionChoice, 20, randint(1, 100000)), 5, 400);
+    TrialResult result = runTrial(AlgorithmInfo((AlgorithmType)algorithmChoice, 0), generateSensors((DistributionType)distributionChoice, 20, randint(1, 100000)), 5, 400);
 
     std::cout << "Total Cost: " << result.totalCost;
     std::cout << "\nTotal Coverage: " << result.coverage << ", " << result.coveragePercent(20) << '%' << endl;
