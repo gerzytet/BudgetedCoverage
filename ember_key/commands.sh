@@ -1,0 +1,2 @@
+cd sensors
+./getNextChunk.sh

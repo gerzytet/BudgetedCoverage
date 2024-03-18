@@ -164,7 +164,7 @@ vector<int> budgetAlgorithm(const vector<Sensor> &sensors, int budget, int R)
     return chosen;
 }
 
-vector<int> weightedAlgorithm(vector<Sensor> &sensors, int budget, int R)
+/*vector<int> weightedAlgorithm(vector<Sensor> &sensors, int budget, int R)
 {
     set<int> chosen;
     set<int> considered;
@@ -211,6 +211,59 @@ vector<int> weightedAlgorithm(vector<Sensor> &sensors, int budget, int R)
     }
     return vector<int>(chosen.begin(), chosen.end());
     //select a set St from G that maximizes Wt over S;
+}*/
+
+vector<int> weightedAlgorithm(vector<Sensor> &sensors, int budget, int R)
+{
+    bs chosen;
+    bs considered;
+    bs covered;
+    int totalCost = 0;
+    vector<bs> coverSets = calculateCoverageSets(sensors, R);
+
+    //initialize with the collection of sets S
+    //allSets = ..
+
+    while (considered.count() < sensors.size())
+    {
+        //get element with max weight
+        int index_maxweight = -1;
+        double maxweight = 0;
+        for (int i = 0; i < sensors.size(); ++i)
+        {
+            if (considered[i] != 0) {
+                continue;
+            }
+
+            int coverage = (coverSets[i] & ~covered).count();
+            int cost = sensors[i].cost;
+            double weight = (double) coverage / cost;
+
+            if (weight > maxweight)
+            {
+                index_maxweight = i;
+                maxweight = weight;
+            }
+        }
+
+        if (index_maxweight == -1) {
+            break;
+        }
+
+        considered.set(index_maxweight, true);
+        if (totalCost + sensors[index_maxweight].cost <= budget)
+        {
+            //cout << sensors[index_maxweight].cost << ' ' << maxweight << ' ' << sensors[index_maxweight].coverage << '\n';
+            chosen.set(index_maxweight, true);
+            covered |= coverSets[index_maxweight];
+            
+            covered.set(index_maxweight, true);
+            totalCost += sensors[index_maxweight].cost;
+        }
+    }
+
+    return bsToVector(chosen);
+    //select a set St from G that maximizes Wt over S;
 
     /*if (G weight >= weight)
         return G;
@@ -222,7 +275,7 @@ vector<int> weightedAlgorithm(vector<Sensor> &sensors, int budget, int R)
 //code to choose all k combinations of n elements takes from here:
 //https://stackoverflow.com/questions/12991758/creating-all-possible-k-combinations-of-n-items-in-c
 
-
+/*
 vector<int> kGreedyAlgorithm(vector<Sensor> &sensors, int budget, int R, int k)
 {
     string bitmask(k, 1); // K leading 1's
@@ -307,6 +360,93 @@ vector<int> kGreedyAlgorithm(vector<Sensor> &sensors, int budget, int R, int k)
     }
 
     return vector<int>(bestChosen.begin(), bestChosen.end());
+}*/
+
+vector<int> kGreedyAlgorithm(vector<Sensor> &sensors, int budget, int R, int k)
+{
+    string bitmask(k, 1); // K leading 1's
+    bitmask.resize(sensors.size(), 0); // N-K trailing 0's
+    bool firstNextCombinationCall = false;
+
+    auto getNextCombination = [&](){
+        vector<Sensor> ans;
+        if (firstNextCombinationCall || std::prev_permutation(bitmask.begin(), bitmask.end())) {
+            for (int i = 0; i < sensors.size(); ++i) // [0..N-1] integers
+            {
+                if (bitmask[i]) ans.push_back(sensors[i]);
+            }
+        }
+        return ans;
+    };
+
+    bs bestChosen;
+    int bestCoverage = 0;
+    int bestCost = 0;
+    vector<bs> coverSets = calculateCoverageSets(sensors, R);
+    while (true) {
+        bs chosen;
+        bs considered;
+        bs covered;
+        int totalCost = 0;
+
+        auto chooseSensor = [&](int index) {
+            //cout << sensors[index_maxweight].cost << ' ' << maxweight << ' ' << sensors[index_maxweight].coverage << '\n';
+            chosen.set(index, true);
+            covered |= coverSets[index];
+            totalCost += sensors[index].cost;
+        };
+
+        vector<Sensor> baseChosen = getNextCombination();
+        if (baseChosen.size() == 0) {
+            break;
+        }
+        for (Sensor &s : baseChosen) {
+            if (s.cost + totalCost <= budget) {
+                chooseSensor(s.i);
+            }
+        }
+
+        while (considered.count() < sensors.size())
+        {
+            //get element with max weight
+            int index_maxweight = -1;
+            double maxweight = 0;
+            for (int i = 0; i < sensors.size(); ++i)
+            {
+                if (considered[i] != 0) {
+                    continue;
+                }
+
+                int coverage = (coverSets[i] & ~covered).count();
+                int cost = sensors[i].cost;
+                double weight = (double) coverage / cost;
+
+                if (weight > maxweight)
+                {
+                    index_maxweight = i;
+                    maxweight = weight;
+                }
+            }
+
+            if (index_maxweight == -1) {
+                break;
+            }
+
+            considered.set(index_maxweight, true);
+            if (totalCost + sensors[index_maxweight].cost <= budget)
+            {
+                chooseSensor(index_maxweight);
+            }
+        }
+
+        if (covered.count() > bestCoverage || (covered.count() == bestCoverage && totalCost < bestCost)) {
+            bestChosen = chosen;
+            bestCost = totalCost;
+            bestCoverage = covered.count();
+        }
+    }
+
+    return bsToVector(bestChosen);
 }
 
 void recursiveBruteForceSearch(

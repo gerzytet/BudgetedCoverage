@@ -2,6 +2,7 @@
 #include "sensor_generators.hpp"
 #include "random_utils.hpp"
 #include "sensor_algorithms.hpp"
+#include <stdlib.h>
 
 bool weightComparator(Sensor a, Sensor b) {
     return a.weight < b.weight;
@@ -386,75 +387,114 @@ void compateAlgorithms() {
     output.close();
 }
 
-void measureCoverageVsBudget2() {
+void measureCoverageVsBudget2(int budget, int starttrial, int endtrial) {
     ofstream output;
-    output.open("coverage_vs_budget_2.csv");
-    output << "algorithm,budget,coverage,cost per coverage unit,time\n";
-    const int R = 15;
+    string name = to_string(budget) + "_" + to_string(starttrial) + "_" + to_string(endtrial);
+    output.open(name + ".csv");
+    //output << "algorithm,budget,coverage,cost per coverage unit,time\n";
+    const int R = 11;
 
     auto printTrial = [&](string name, TrialResult result, int budget) {
         output << name << ',';
         output << budget << ',';
         output << result.coverage << ',';
-        double coveragePerDollar = result.totalCost;//((double)result.budgetSpent / result.coverage);
-        output << coveragePerDollar << '\n';
+        double coveragePerDollar = ((double)result.totalCost / result.coverage);
+        output << coveragePerDollar << ',';
         output << result.ms << '\n';
     };
-    for (int budget = 480; budget < 600; budget += 40) {
-        for (int i = 0; i < 100; i++) {
-            vector<Sensor> sensors = generateSensors(CLUSTERED, 60, i*budget);
-            printTrial("dynamic", runTrial(
-                DYNAMIC_ALG,
-                sensors,
-                R,
-                budget,
-                "dynamic_" + to_string(i+1)
-            ), budget);
-            printTrial("greedy", runTrial(
-                BETTER_GREEDY_ALG,
-                sensors,
-                R,
-                budget,
-                "greedy_" + to_string(i+1)
-            ), budget);
-            printTrial("random", runTrial(
-                RANDOM_ALG,
-                sensors,
-                R,
-                budget,
-                "random_" + to_string(i+1)
-            ), budget);
-            printTrial("bad_greedy", runTrial(
-                GREEDY_ALG,
-                sensors,
-                R,
-                budget,
-                "bad_greedy_" + to_string(i+1)
-            ), budget);
-            printTrial("k=1", runTrial(
-                AlgorithmInfo(K_GREEDY_ALG_TYPE, 1),
-                sensors,
-                R,
-                budget,
-                "k1_" + to_string(i+1)
-            ), budget);
-            printTrial("k=2", runTrial(
-                AlgorithmInfo(K_GREEDY_ALG_TYPE, 2),
-                sensors,
-                R,
-                budget,
-                "k2_" + to_string(i+1)
-            ), budget);
-            cout << "Budget " << budget << " Trial " << i+1 << "\n";
-
-        }
+    for (int i = starttrial; i < endtrial; i++) {
+        vector<Sensor> sensors = generateSensors(CLUSTERED, 60, i*budget);
+        printTrial("dynamic", runTrial(
+            DYNAMIC_ALG,
+            sensors,
+            R,
+            budget,
+            "dynamic_" + to_string(i+1)
+        ), budget);
+        cout << "1\n";
+        printTrial("greedy", runTrial(
+            BETTER_GREEDY_ALG,
+            sensors,
+            R,
+            budget,
+            "greedy_" + to_string(i+1)
+        ), budget);
+        cout << "2\n";
+        printTrial("random", runTrial(
+            RANDOM_ALG,
+            sensors,
+            R,
+            budget,
+            "random_" + to_string(i+1)
+        ), budget);
+        cout << "3\n";
+        printTrial("bad_greedy", runTrial(
+            GREEDY_ALG,
+            sensors,
+            R,
+            budget,
+            "bad_greedy_" + to_string(i+1)
+        ), budget);
+        cout << "4\n";
+        printTrial("k=1", runTrial(
+            AlgorithmInfo(K_GREEDY_ALG_TYPE, 1),
+            sensors,
+            R,
+            budget,
+            "k1_" + to_string(i+1)
+        ), budget);
+        cout << "5\n";
+        printTrial("k=2", runTrial(
+            AlgorithmInfo(K_GREEDY_ALG_TYPE, 2),
+            sensors,
+            R,
+            budget,
+            "k2_" + to_string(i+1)
+        ), budget);
+        cout << "Budget " << budget << " Trial " << i+1 << "\n";
     }
     output.close();
 }
 
+vector<int> getNextBatch() {
+    system(".\\connect.bat");
+    ifstream output;
+    output.open("output.txt");
+    vector<int> ans;
+    for (int i = 0; i < 3; i++) {
+        int x;
+        output >> x;
+        ans.push_back(x);
+    }
+    return ans;
+}
+
+void upload(string filename) {
+    system((".\\upload_done.bat " + filename).c_str());
+}
+
+void measureCoverageVsBudget2RemoteLoop() {
+    while (true) {
+        cout << "Getting batch...\n";
+        vector<int> params = getNextBatch();
+        if (params[0] == 0 && params[1] == 0 && params[2] == 0) {
+            break;
+        }
+        cout << "Got batch: " << params[0] << ' ' << params[1] << ' ' << params[2] << '\n';
+        measureCoverageVsBudget2(params[0], params[1], params[2]);
+        string name = to_string(params[0]) + "_" + to_string(params[1]) + "_" + to_string(params[2]) + ".csv";
+        cout << "Uploading...\n";
+        upload(name);
+    }
+}
+
 int main()
 {
-    measureCoverageVsBudget2();
+    //for (int x : getNextBatch()) {
+    //    cout << x << '\n';
+    //}
+    //experiment2();
+    measureCoverageVsBudget2RemoteLoop();
     //runTrial(DYNAMIC_ALG, generateSensors(CLUSTERED, 75, 0), 15, 500, "dynamic_test");
     return 0;
 

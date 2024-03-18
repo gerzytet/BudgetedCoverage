@@ -1,0 +1,1 @@
+.\ember_key\plink.exe -ssh cwhite1412@ember.hpc.lab -m ember_key/commands.sh -i ember_key/ember_key_win.ppk > output.txt

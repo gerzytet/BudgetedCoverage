@@ -33,6 +33,7 @@ using std::max;
 using std::min;
 using std::string;
 using std::sort;
+using std::ifstream;
 
 //Struct variables are public by default instead of private
 struct Sensor
@@ -43,7 +44,7 @@ struct Sensor
 
     Sensor(int x, int y, int cost, int i): x(x), y(y), cost(cost), coverage(0), i(i) {} // Short for this.x = x this.y = y this.cost=cost
 };
-using bs = bitset<256>;
+using bs = bitset<64>;
 
 double calculateDistance(Sensor s1, Sensor s2);
 double calculateDistance(pair<int, int> p1, pair<int, int> p2);
