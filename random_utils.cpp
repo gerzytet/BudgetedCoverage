@@ -22,3 +22,9 @@ double randnormal(double mean, double deviation) {
     normal_distribution<double> distribution(mean, deviation);
     return distribution(randomGenerator);
 }
+
+double randexponential(double mean, double deviation) {
+    uniform_real_distribution<double> dist(0, 1);
+    double y = dist(randomGenerator);
+    return -log(y) / (1/deviation) + mean;
+}

@@ -122,6 +122,8 @@ vector<Sensor> generateSensors(DistributionType distributionChoice, int num_sens
     else if(distributionChoice == RANDOM)
     {
         sensors = generateSensorsRandomly(num_sensors);
+    } else if (distributionChoice == EXPONENTIAL) {
+        sensors = generateSensorsClustered(num_sensors, true);
     }
 
     return sensors;
@@ -488,15 +490,74 @@ void measureCoverageVsBudget2RemoteLoop() {
     }
 }
 
+void experiment4() {
+    ofstream output;
+    //string name = to_string(budget) + "_" + to_string(starttrial) + "_" + to_string(endtrial);
+    output.open("experiment4.csv");
+    for (int budget = 100; budget <= 3000; budget+=100) {
+        for (int trial = 0; trial < 100; trial++) {
+            for (DistributionType distribution : {CLUSTERED, RANDOM, EXPONENTIAL}) {
+                //output << "algorithm,budget,coverage,cost per coverage unit,time\n";
+                const int R = 11;
+
+                auto printTrial = [&](string name, TrialResult result, int budget) {
+                    output << name << ',';
+                    output << budget << ',';
+                    output << result.coverage << ',';
+                    double coveragePerDollar = ((double)result.totalCost / result.coverage);
+                    output << coveragePerDollar << ',';
+                    output << distribution << ',';
+                    output << result.ms << endl;
+                };
+
+                vector<Sensor> sensors = generateSensors(distribution, 100, budget + trial);
+                printTrial("greedy", runTrial(
+                    BETTER_GREEDY_ALG,
+                    sensors,
+                    R,
+                    budget
+                ), budget);
+                printTrial("random", runTrial(
+                    RANDOM_ALG,
+                    sensors,
+                    R,
+                    budget
+                ), budget);
+                printTrial("bad_greedy", runTrial(
+                    GREEDY_ALG,
+                    sensors,
+                    R,
+                    budget
+                ), budget);
+                printTrial("k=1", runTrial(
+                    AlgorithmInfo(K_GREEDY_ALG_TYPE, 1),
+                    sensors,
+                    R,
+                    budget
+                ), budget);
+                printTrial("k=2", runTrial(
+                    AlgorithmInfo(K_GREEDY_ALG_TYPE, 2),
+                    sensors,
+                    R,
+                    budget
+                ), budget);
+
+                cout << "Budget " << budget << " Trial " << trial+1 << " dist " << (int)distribution << "\n";
+            }
+        }
+    }
+}
+
 int main()
 {
+    experiment4();
     //for (int x : getNextBatch()) {
     //    cout << x << '\n';
     //}
     //experiment2();
-    measureCoverageVsBudget2RemoteLoop();
+    //measureCoverageVsBudget2RemoteLoop();
     //runTrial(DYNAMIC_ALG, generateSensors(CLUSTERED, 75, 0), 15, 500, "dynamic_test");
-    return 0;
+    //return 0;
 
     //This is a text based menu for running a custom trial
     //not in use for the experiment:
@@ -512,7 +573,7 @@ int main()
 
     cout << endl;
 
-    TrialResult result = runTrial(AlgorithmInfo((AlgorithmType)algorithmChoice, 0), generateSensors((DistributionType)distributionChoice, 20, randint(1, 100000)), 5, 400);
+    TrialResult result = runTrial(AlgorithmInfo((AlgorithmType)algorithmChoice, 0), generateSensors((DistributionType)distributionChoice, 100, randint(1, 100000)), 5, 400, "manual_run.txt");
 
     std::cout << "Total Cost: " << result.totalCost;
     std::cout << "\nTotal Coverage: " << result.coverage << ", " << result.coveragePercent(20) << '%' << endl;

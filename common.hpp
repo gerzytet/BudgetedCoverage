@@ -44,7 +44,7 @@ struct Sensor
 
     Sensor(int x, int y, int cost, int i): x(x), y(y), cost(cost), coverage(0), i(i) {} // Short for this.x = x this.y = y this.cost=cost
 };
-using bs = bitset<64>;
+using bs = bitset<128>;
 
 double calculateDistance(Sensor s1, Sensor s2);
 double calculateDistance(pair<int, int> p1, pair<int, int> p2);

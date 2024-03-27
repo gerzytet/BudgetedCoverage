@@ -7,7 +7,7 @@ const int MAX_COORDINATE = 100;
 int randomCost()
 {
     //return project2Mode ? randint(10, 100) : randint(250, 500);
-    return randint(10, 100);
+    return randnormal(5, 2);
 }
 
 vector<Sensor> generateSensorsRandomly(int num_points)
@@ -45,11 +45,25 @@ vector<Sensor> generateSensorsUniformly(int num_points)
     return sensors;
 }
 
+template <typename T>
+T logg(T t) {
+    //cout << t << " ";
+    return t;
+}
+
+pair<int, int> randomPoint(pair<int, int> center, int radius, bool exponental_mode = false) {
+    float angle = (rand() % 360) * M_PI / 180;
+    int x = center.first + logg(abs(exponental_mode ? randexponential(0, radius) : randnormal(0, radius)) * cos(angle));
+    int y = center.second + logg(abs(exponental_mode ? randexponential(0, radius) : randnormal(0, radius)) * sin(angle));
+    //cout << angle << " " << x << " " << y << endl;
+    return make_pair(x, y);
+}
+
 const int NEIGHBORHOODS = 4;
-vector<Sensor> generateSensorsClustered(int num_points)
+vector<Sensor> generateSensorsClustered(int num_points, bool exponental_mode)
 {
     vector<Sensor> sensors;
-    vector<pair<int, int>> points;
+    /*vector<pair<int, int>> points;
     double threshold = 40;
     while (points.size() < NEIGHBORHOODS)
     {
@@ -70,6 +84,12 @@ vector<Sensor> generateSensorsClustered(int num_points)
             continue;
         }
         points.push_back(point);
+    }*/
+    int center_x[4] = {30, 80, 50, 90};
+    int center_y[4] = {80, 80, 50, 30};
+    vector<pair<int, int>> points;
+    for (int i = 0; i < NEIGHBORHOODS; i++) {
+        points.push_back(make_pair(center_x[i], center_y[i]));
     }
 
     int points_per_neighborhood = num_points / NEIGHBORHOODS;
@@ -82,38 +102,31 @@ vector<Sensor> generateSensorsClustered(int num_points)
         int costDeviation;
         switch (counter) {
             case 1:
-                costMean = 5;
-                costDeviation = 4;
+                costMean = 50;
+                costDeviation = 20;
                 break;
             case 2:
-                costMean = 30;
-                costDeviation = 10;
+                costMean = 100;
+                costDeviation = 20;
                 break;
             case 3:
-                costMean = 65;
-                costDeviation = 15;
+                costMean = 150;
+                costDeviation = 20;
                 break;
             case 4:
-                costMean = 18;
-                costDeviation = 7;
+                costMean = 200;
+                costDeviation = 20;
                 break;
         }
         for (int i = 0; i < points_per_neighborhood; i++)
         {
-            int x = -1;
-            int mean = point.first;
-            int deviation = 15;
-            while (x < 0 || x > 100) {
-                x = randnormal(mean, deviation);
-            }
-            int y = -1;
-            mean = point.second;
-            while (y < 0 || y > 100) {
-                y = randnormal(mean, deviation);
-            }
+            //cout << points[i].first << " " << points[i].second << endl;
+            pair<int, int> p = randomPoint(point, 30, exponental_mode);
+            int x = p.first;
+            int y = p.second;
             int cost = -1;
             while (cost < 0) {
-                cost = randnormal(costMean, costDeviation);
+                cost = exponental_mode ? randexponential(costMean, costDeviation) : (costMean, costDeviation);
             }
 
             sensors.push_back(Sensor(x, y, cost, i));
