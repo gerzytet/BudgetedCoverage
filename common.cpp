@@ -53,3 +53,7 @@ void calculateCoverage(vector<Sensor> &sensors, int R) {
     set<int> covered;
     calculateCoverage(sensors, covered, R);
 }
+
+bool inRange(int x, int y) {
+    return x >= 0 && x <= MAX_COORDINATE && y >= 0 && y <= MAX_COORDINATE;
+}

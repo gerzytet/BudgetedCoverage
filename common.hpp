@@ -45,9 +45,11 @@ struct Sensor
     Sensor(int x, int y, int cost, int i): x(x), y(y), cost(cost), coverage(0), i(i) {} // Short for this.x = x this.y = y this.cost=cost
 };
 using bs = bitset<128>;
+const int MAX_COORDINATE = 100;
 
 double calculateDistance(Sensor s1, Sensor s2);
 double calculateDistance(pair<int, int> p1, pair<int, int> p2);
 vector<int> returnCoveredSensors(const vector<Sensor> &sensors, int index, int R);
 void calculateCoverage(vector<Sensor> &sensors, set<int> covered, int R);
 void calculateCoverage(vector<Sensor> &sensors, int R);
+bool inRange(int x, int y);

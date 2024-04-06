@@ -2,6 +2,7 @@
 #include "sensor_generators.hpp"
 #include "random_utils.hpp"
 #include "sensor_algorithms.hpp"
+#include "sensor_movement.hpp"
 #include <stdlib.h>
 
 bool weightComparator(Sensor a, Sensor b) {
@@ -566,9 +567,19 @@ void experiment4RemoteLoop() {
     }
 }
 
+void testRandomMovement() {
+    vector<Sensor> sensors = generateSensors(CLUSTERED, 100, 0);
+    for (int i = 0; i < 100; i++) {
+        auto trial = runTrial(GREEDY_ALG, sensors, 5, 100, "random_movement_" + to_string(i));
+        moveParticicpants(RANDOM_MOVEMENT, sensors);
+        cout << sensors[0].x  << " " << sensors[0].y << '\n';
+    }
+}
+
 int main()
 {
-    experiment4RemoteLoop();
+    //experiment4();
+    testRandomMovement();
     //for (int x : getNextBatch()) {
     //    cout << x << '\n';
     //}

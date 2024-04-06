@@ -7,7 +7,7 @@ const int MAX_COORDINATE = 100;
 int randomCost()
 {
     //return project2Mode ? randint(10, 100) : randint(250, 500);
-    return randnormal(5, 2);
+    return randnormal(50, 20);
 }
 
 vector<Sensor> generateSensorsRandomly(int num_points)
@@ -51,10 +51,17 @@ T logg(T t) {
     return t;
 }
 
+
+
 pair<int, int> randomPoint(pair<int, int> center, int radius, bool exponental_mode = false) {
-    float angle = (rand() % 360) * M_PI / 180;
-    int x = center.first + logg(abs(exponental_mode ? randexponential(0, radius) : randnormal(0, radius)) * cos(angle));
-    int y = center.second + logg(abs(exponental_mode ? randexponential(0, radius) : randnormal(0, radius)) * sin(angle));
+
+    int x = -1;
+    int y = -1;
+    while (!inRange(x, y)) {
+        float angle = (rand() % 360) * M_PI / 180;
+        x = center.first + logg(abs(exponental_mode ? randexponential(0, radius) : randnormal(0, radius)) * cos(angle));
+        y = center.second + logg(abs(exponental_mode ? randexponential(0, radius) : randnormal(0, radius)) * sin(angle));
+    }
     //cout << angle << " " << x << " " << y << endl;
     return make_pair(x, y);
 }
