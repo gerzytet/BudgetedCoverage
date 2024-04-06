@@ -7,3 +7,7 @@ int randint(int a, int b);
 double randfloat(double a, double b);
 double randnormal(double mean, double deviation);
 double randexponential(double mean, double deviation);
+bool randbool();
+
+template<typename T>
+void shuffle(vector<T> &v);

@@ -80,6 +80,7 @@ struct TrialResult {
     int areaCoverage;
     int totalCost;
     int ms;
+    vector<int> chosen;
 
     double coveragePercent(int total_sensors) {
         return ((double) coverage / total_sensors);
@@ -89,7 +90,14 @@ struct TrialResult {
         return ((double) areaCoverage / (101 * 101));
     }
 
-    TrialResult (int coverage, int areaCoverage, int totalCost, int ms) : coverage(coverage), areaCoverage(areaCoverage), totalCost(totalCost), ms(ms) {}
+    TrialResult (int coverage, int areaCoverage, int totalCost, int ms, vector<int> chosen) : coverage(coverage), areaCoverage(areaCoverage), totalCost(totalCost), ms(ms), chosen(chosen) {}
+};
+
+struct RoundResult : TrialResult {
+    int num_participants;
+
+    RoundResult (int coverage, int areaCoverage, int totalCost, int ms, vector<int> chosen, int num_participants) : TrialResult(coverage, areaCoverage, totalCost, ms, chosen), num_participants(num_participants) {}
+    RoundResult (TrialResult result, int num_participants) : TrialResult(result), num_participants(num_participants) {}
 };
 
 enum AlgorithmType {
@@ -127,7 +135,34 @@ vector<Sensor> generateSensors(DistributionType distributionChoice, int num_sens
         sensors = generateSensorsClustered(num_sensors, true);
     }
 
+    generateParticipantData(sensors);
     return sensors;
+}
+
+void adjustBidPrices(vector<Sensor> &sensors, vector<int> chosen) {
+    vector<Sensor> shuffled = sensors;
+    shuffle(shuffled);
+    set<int> chosen_set(chosen.begin(), chosen.end());
+
+    int num_winners_increase = chosen.size() / 2;
+    if (chosen.size() % 2 == 1 && randbool())  {
+        num_winners_increase++;
+    }
+
+    int i = 0;
+    while (num_winners_increase) {
+        if (chosen_set.count(shuffled[i].i) == 1) {
+            shuffled[i].cost *= 1.1;
+            num_winners_increase--;
+        }
+        i++;
+    }
+
+    for (Sensor &s : shuffled) {
+        if (chosen_set.count(s.i) == 0) {
+            s.cost *= 0.9;
+        }
+    }
 }
 
 vector<Sensor> lastSensorsUsed;
@@ -204,7 +239,52 @@ TrialResult runTrial(AlgorithmInfo algorithmInfo, vector<Sensor> sensors, int R,
         totalCost += sensors[i].cost;
     }
 
-    return TrialResult(calculateTotalCoverage(sensors, chosen, R), calculateAreaCoverage(chosen, sensors, R), totalCost, ms);
+    return TrialResult(calculateTotalCoverage(sensors, chosen, R), calculateAreaCoverage(chosen, sensors, R), totalCost, ms, chosen);
+}
+
+void postRoundActions(vector<Sensor> &sensors, TrialResult result) {
+    vector<int> chosen = result.chosen;
+    set<int> chosen_set(chosen.begin(), chosen.end());
+    int highestWinner = 0;
+    for (Sensor &s : sensors) {
+        if (s.is_participating) {
+            bool won = chosen_set.count(s.i) == 1 ? 1 : 0;
+            int winnings = won ? s.cost : 0;
+            s.markRoundResult(winnings);
+            highestWinner = max(highestWinner, winnings);
+        }
+    }
+    adjustBidPrices(sensors, chosen);
+    for (Sensor &s : sensors) {
+        if (s.is_participating) {
+            s.is_participating = s.getROI() > 0.5;
+        }
+        else {
+            double expectedROI = s.getExpectedROI(highestWinner);
+            if (expectedROI > 0.5 && randbool()) {
+                s.is_participating = true;
+            }
+        }
+    }
+}
+
+RoundResult runRound(AlgorithmInfo algorithmInfo, vector<Sensor> &sensors, int R, int budget, string logname = "") {
+    vector<Sensor> sensorsCopy = sensors;
+    for (Sensor &s : sensorsCopy) {
+        if (!s.is_participating) {
+            s.cost = 9999999;
+        }
+    }
+    TrialResult result = runTrial(algorithmInfo, sensorsCopy, R, budget, logname);
+    for (Sensor &s : sensors) {
+        s.cost = sensorsCopy[s.i].cost;
+    }
+    /*for (int i = 0; i < 5; i++) {
+        cout << sensors[i].getROI() << ' ';
+    }*/
+    int num_participants = count_if(sensors.begin(), sensors.end(), [](Sensor s) { return s.is_participating; });
+    postRoundActions(sensors, result);
+    return RoundResult(result, num_participants);
 }
 
 void experiment() {
@@ -568,7 +648,9 @@ void experiment4RemoteLoop() {
 }
 
 void testRandomMovement() {
+        cout << "HERE\n";
     vector<Sensor> sensors = generateSensors(CLUSTERED, 100, 0);
+    cout << "HERE\n";
     for (int i = 0; i < 100; i++) {
         auto trial = runTrial(GREEDY_ALG, sensors, 5, 100, "random_movement_" + to_string(i));
         moveParticicpants(RANDOM_MOVEMENT, sensors);
@@ -576,13 +658,29 @@ void testRandomMovement() {
     }
 }
 
+void testRounds() {
+    vector<Sensor> sensors = generateSensors(RANDOM, 60, 0);
+    for (int i = 0; i < 100; i++) {
+        auto result = runRound(
+            BETTER_GREEDY_ALG,
+            sensors,
+            15,
+            1000,
+            "round_" + to_string(i)
+        );
+
+        //print num_participants and coverage
+        cout << result.num_participants << ' ' << result.coverage << '\n';
+    }
+}
+
 int main()
 {
     //experiment4();
-    for (int i = 0; i < 20; i++) {
+    /*for (int i = 0; i < 20; i++) {
         cout << randnormal(50, 20) << '\n';
-    }
-    testRandomMovement();
+    }*/
+    testRounds();
     //for (int x : getNextBatch()) {
     //    cout << x << '\n';
     //}

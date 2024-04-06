@@ -140,3 +140,16 @@ vector<Sensor> generateSensorsClustered(int num_points, bool exponental_mode)
 
     return sensors;
 }
+
+void generateParticipantData(vector<Sensor> &sensors) {
+    for (Sensor &s : sensors) {
+        //the cost generated in the previous step is the true valuation
+        //a new cost will be generated based off of that
+
+        s.t = s.cost;
+        s.cost = s.t * randfloat(1.0, 1.5);
+
+        //generate beta
+        s.beta = randfloat(3.0, 7.0);
+    }
+}

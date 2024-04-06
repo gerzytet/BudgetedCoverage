@@ -10,3 +10,5 @@ vector<Sensor> generateSensorsRandomly(int num_points);
 vector<Sensor> generateSensorsUniformly(int num_points);
 vector<Sensor> generateSensorsClustered(int num_points, bool exponential_mode = false);
 vector<Sensor> generateSensors(DistributionType distributionChoice, int num_sensors, int seed);
+
+void generateParticipantData(vector<Sensor> &sensors);

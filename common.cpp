@@ -1,4 +1,5 @@
 #include "common.hpp"
+#include "random_utils.hpp"
 
 double calculateDistance(Sensor s1, Sensor s2)
 {
@@ -47,6 +48,19 @@ void calculateCoverage(vector<Sensor> &sensors, set<int> covered, int R)
             }
         }
     }
+}
+
+double Sensor::getROI() const {
+    return double(total_reward + beta) / (t * times_participated + beta);
+}
+
+double Sensor::getExpectedROI(double maxWinningBid) {
+    return double(total_reward + beta + maxWinningBid) / (t * (times_participated + 1) + beta);
+}
+
+void Sensor::markRoundResult(int reward) {
+    this->total_reward += reward;
+    this->times_participated++;
 }
 
 void calculateCoverage(vector<Sensor> &sensors, int R) {
