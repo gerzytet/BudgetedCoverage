@@ -458,12 +458,12 @@ void measureCoverageVsBudget2(int budget, int starttrial, int endtrial) {
     output.close();
 }
 
-vector<int> getNextBatch() {
+vector<int> getNextBatch(int num) {
     system(".\\connect.bat");
     ifstream output;
     output.open("output.txt");
     vector<int> ans;
-    for (int i = 0; i < 3; i++) {
+    for (int i = 0; i < num; i++) {
         int x;
         output >> x;
         ans.push_back(x);
@@ -478,7 +478,7 @@ void upload(string filename) {
 void measureCoverageVsBudget2RemoteLoop() {
     while (true) {
         cout << "Getting batch...\n";
-        vector<int> params = getNextBatch();
+        vector<int> params = getNextBatch(3);
         if (params[0] == 0 && params[1] == 0 && params[2] == 0) {
             break;
         }
@@ -490,15 +490,17 @@ void measureCoverageVsBudget2RemoteLoop() {
     }
 }
 
-void experiment4() {
+void experiment4(int budget, int radius, int starttrial, int endtrial) {
     ofstream output;
+    string name = to_string(budget) + "_" + to_string(radius) + "_" + to_string(starttrial) + "_" + to_string(endtrial) + ".csv";
+
     //string name = to_string(budget) + "_" + to_string(starttrial) + "_" + to_string(endtrial);
-    output.open("experiment4.csv");
-    for (int budget = 100; budget <= 3000; budget+=100) {
-        for (int trial = 0; trial < 100; trial++) {
+    output.open(name);
+    //for (int budget = 100; budget <= 3000; budget+=100) {
+        for (int trial = starttrial; trial < endtrial; trial++) {
             for (DistributionType distribution : {CLUSTERED, RANDOM, EXPONENTIAL}) {
                 //output << "algorithm,budget,coverage,cost per coverage unit,time\n";
-                const int R = 11;
+                const int R = radius;
 
                 auto printTrial = [&](string name, TrialResult result, int budget) {
                     output << name << ',';
@@ -507,10 +509,11 @@ void experiment4() {
                     double coveragePerDollar = ((double)result.totalCost / result.coverage);
                     output << coveragePerDollar << ',';
                     output << distribution << ',';
+                    output << radius << ',';
                     output << result.ms << endl;
                 };
 
-                vector<Sensor> sensors = generateSensors(distribution, 100, budget + trial);
+                vector<Sensor> sensors = generateSensors(distribution, 100, (budget + trial + 5000) * radius);
                 printTrial("greedy", runTrial(
                     BETTER_GREEDY_ALG,
                     sensors,
@@ -545,12 +548,27 @@ void experiment4() {
                 cout << "Budget " << budget << " Trial " << trial+1 << " dist " << (int)distribution << "\n";
             }
         }
+    //}
+}
+
+void experiment4RemoteLoop() {
+    while (true) {
+        cout << "Getting batch...\n";
+        vector<int> params = getNextBatch(4);
+        if (params[0] == 0 && params[1] == 0 && params[2] == 0 && params[3] == 0) {
+            break;
+        }
+        cout << "Got batch: " << params[0] << ' ' << params[1] << ' ' << params[2] << ' ' << params[3] << '\n';
+        experiment4(params[0], params[1], params[2], params[3]);
+        string name = to_string(params[0]) + "_" + to_string(params[1]) + "_" + to_string(params[2]) + "_" + to_string(params[3]) + ".csv";
+        cout << "Uploading...\n";
+        upload(name);
     }
 }
 
 int main()
 {
-    experiment4();
+    experiment4RemoteLoop();
     //for (int x : getNextBatch()) {
     //    cout << x << '\n';
     //}

@@ -1,6 +1,6 @@
 #include "sensor_generators.hpp"
 #include "random_utils.hpp"
-
+#define M_PI 3.14159265358979323846
 const int MAX_COORDINATE = 100;
 
 
