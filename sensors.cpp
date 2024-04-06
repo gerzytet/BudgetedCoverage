@@ -579,6 +579,9 @@ void testRandomMovement() {
 int main()
 {
     //experiment4();
+    for (int i = 0; i < 20; i++) {
+        cout << randnormal(50, 20) << '\n';
+    }
     testRandomMovement();
     //for (int x : getNextBatch()) {
     //    cout << x << '\n';

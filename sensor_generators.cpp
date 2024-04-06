@@ -1,8 +1,6 @@
 #include "sensor_generators.hpp"
 #include "random_utils.hpp"
 #define M_PI 3.14159265358979323846
-const int MAX_COORDINATE = 100;
-
 
 int randomCost()
 {
@@ -133,7 +131,7 @@ vector<Sensor> generateSensorsClustered(int num_points, bool exponental_mode)
             int y = p.second;
             int cost = -1;
             while (cost < 0) {
-                cost = exponental_mode ? randexponential(costMean, costDeviation) : (costMean, costDeviation);
+                cost = exponental_mode ? randexponential(costMean, costDeviation) : randnormal(costMean, costDeviation);
             }
 
             sensors.push_back(Sensor(x, y, cost, i));
