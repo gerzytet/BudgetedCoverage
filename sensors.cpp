@@ -90,6 +90,10 @@ struct TrialResult {
         return ((double) areaCoverage / (101 * 101));
     }
 
+    double averagePrice() {
+        return chosen.size() > 0 ? ((double) totalCost / chosen.size()) : 0;
+    }
+
     TrialResult (int coverage, int areaCoverage, int totalCost, int ms, vector<int> chosen) : coverage(coverage), areaCoverage(areaCoverage), totalCost(totalCost), ms(ms), chosen(chosen) {}
 };
 
@@ -152,13 +156,13 @@ void adjustBidPrices(vector<Sensor> &sensors, vector<int> chosen) {
     int i = 0;
     while (num_winners_increase) {
         if (chosen_set.count(shuffled[i].i) == 1) {
-            shuffled[i].cost *= 1.1;
+            sensors[i].cost *= 1.1;
             num_winners_increase--;
         }
         i++;
     }
 
-    for (Sensor &s : shuffled) {
+    for (Sensor &s : sensors) {
         if (chosen_set.count(s.i) == 0) {
             s.cost *= 0.9;
         }
@@ -248,7 +252,7 @@ void postRoundActions(vector<Sensor> &sensors, TrialResult result) {
     int highestWinner = 0;
     for (Sensor &s : sensors) {
         if (s.is_participating) {
-            bool won = chosen_set.count(s.i) == 1 ? 1 : 0;
+            bool won = chosen_set.count(s.i) == 1;
             int winnings = won ? s.cost : 0;
             s.markRoundResult(winnings);
             highestWinner = max(highestWinner, winnings);
@@ -266,6 +270,8 @@ void postRoundActions(vector<Sensor> &sensors, TrialResult result) {
             }
         }
     }
+
+    moveParticicpants(RANDOM_MOVEMENT, sensors);
 }
 
 RoundResult runRound(AlgorithmInfo algorithmInfo, vector<Sensor> &sensors, int R, int budget, string logname = "") {
@@ -276,9 +282,9 @@ RoundResult runRound(AlgorithmInfo algorithmInfo, vector<Sensor> &sensors, int R
         }
     }
     TrialResult result = runTrial(algorithmInfo, sensorsCopy, R, budget, logname);
-    for (Sensor &s : sensors) {
-        s.cost = sensorsCopy[s.i].cost;
-    }
+    //for (Sensor &s : sensors) {
+    //    s.cost = sensorsCopy[s.i].cost;
+    //}
     /*for (int i = 0; i < 5; i++) {
         cout << sensors[i].getROI() << ' ';
     }*/
@@ -393,7 +399,7 @@ void measureCoverageVsBudget() {
         output << name << ',';
         output << budget << ',';
         output << result.coverage << ',';
-        double coveragePerDollar = ((double)result.totalCost / result.coverage);
+        double coveragePerDollar = result.coverage > 0 ? ((double)result.totalCost / result.coverage) : 0;
         output << coveragePerDollar << '\n';
     };
     for (int budget = 20; budget < 600; budget += 20) {
@@ -474,7 +480,6 @@ void measureCoverageVsBudget2(int budget, int starttrial, int endtrial) {
     ofstream output;
     string name = to_string(budget) + "_" + to_string(starttrial) + "_" + to_string(endtrial);
     output.open(name + ".csv");
-    //output << "algorithm,budget,coverage,cost per coverage unit,time\n";
     const int R = 11;
 
     auto printTrial = [&](string name, TrialResult result, int budget) {
@@ -575,7 +580,6 @@ void experiment4(int budget, int radius, int starttrial, int endtrial) {
     ofstream output;
     string name = to_string(budget) + "_" + to_string(radius) + "_" + to_string(starttrial) + "_" + to_string(endtrial) + ".csv";
 
-    //string name = to_string(budget) + "_" + to_string(starttrial) + "_" + to_string(endtrial);
     output.open(name);
     //for (int budget = 100; budget <= 3000; budget+=100) {
         for (int trial = starttrial; trial < endtrial; trial++) {
@@ -652,25 +656,50 @@ void testRandomMovement() {
     vector<Sensor> sensors = generateSensors(CLUSTERED, 100, 0);
     cout << "HERE\n";
     for (int i = 0; i < 100; i++) {
-        auto trial = runTrial(GREEDY_ALG, sensors, 5, 100, "random_movement_" + to_string(i));
+        auto trial = runTrial(RANDOM_ALG, sensors, 5, 100, "random_movement_" + to_string(i));
         moveParticicpants(RANDOM_MOVEMENT, sensors);
         cout << sensors[0].x  << " " << sensors[0].y << '\n';
     }
 }
 
+void debugsensor(Sensor &s) {
+    //if (s.getROI() < 0.5) {
+        cout << "Wierd sensor: " << s.getROI() << ' ' << s.t << ' ' << s.cost << '\n';
+    //}
+}
+
 void testRounds() {
-    vector<Sensor> sensors = generateSensors(RANDOM, 60, 0);
+    ofstream output("rounds_output.txt");
+    vector<Sensor> sensors = generateSensors(CLUSTERED, 60, 0);
     for (int i = 0; i < 100; i++) {
+        /*if (i == 0) {
+            for (Sensor &s : sensors) {
+                cout << s.getROI() << ' ';
+            }
+            debugsensor(sensors[15]);
+            cout << '\n';
+        }*/
+        //debugsensor(sensors[15]);
         auto result = runRound(
-            BETTER_GREEDY_ALG,
+            AlgorithmInfo(K_GREEDY_ALG_TYPE, 1),
             sensors,
-            15,
+            5,
             1000,
             "round_" + to_string(i)
         );
+        /*if (i == 0) {
+            for (Sensor &s : sensors) {
+                cout << s.getROI() << ' ';
+
+            }
+            debugsensor(sensors[15]);
+
+            cout << '\n';
+
+        }*/
 
         //print num_participants and coverage
-        cout << result.num_participants << ' ' << result.coverage << '\n';
+        output << result.num_participants << ' ' << result.chosen.size() << ' ' << result.coverage << ' ' << (result.coverage > 0 ? ((double)result.totalCost/result.coverage) : 0) << ' ' << result.averagePrice() << '\n';
     }
 }
 
@@ -691,7 +720,7 @@ int main()
 
     //This is a text based menu for running a custom trial
     //not in use for the experiment:
-    int algorithmChoice;
+    /*int algorithmChoice;
     std::cout << "Which algorithm would you like to use?\n1. Greedy Algorithm\n2. Random Algorithm\n3. Budgeted Algorithm\n4. Dynamic Algorithm";
     std::cin >> algorithmChoice;
 
@@ -707,5 +736,5 @@ int main()
 
     std::cout << "Total Cost: " << result.totalCost;
     std::cout << "\nTotal Coverage: " << result.coverage << ", " << result.coveragePercent(20) << '%' << endl;
-    std::cout << "\nArea Coverage: " << result.areaCoverage << ", " << result.areaCoveragePercent() << '%' << endl;
+    std::cout << "\nArea Coverage: " << result.areaCoverage << ", " << result.areaCoveragePercent() << '%' << endl;*/
 }

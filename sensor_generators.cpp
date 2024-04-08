@@ -92,6 +92,7 @@ vector<Sensor> generateSensorsClustered(int num_points, bool exponental_mode)
     }*/
     int center_x[4] = {30, 80, 50, 90};
     int center_y[4] = {80, 80, 50, 30};
+    int count = 0;
     vector<pair<int, int>> points;
     for (int i = 0; i < NEIGHBORHOODS; i++) {
         points.push_back(make_pair(center_x[i], center_y[i]));
@@ -134,7 +135,7 @@ vector<Sensor> generateSensorsClustered(int num_points, bool exponental_mode)
                 cost = exponental_mode ? randexponential(costMean, costDeviation) : randnormal(costMean, costDeviation);
             }
 
-            sensors.push_back(Sensor(x, y, cost, i));
+            sensors.push_back(Sensor(x, y, cost, count++));
         }
     }
 
