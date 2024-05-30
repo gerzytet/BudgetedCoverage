@@ -50,6 +50,7 @@ vector<int> chooseSensorsRandomly(const vector<Sensor> &sensors, int budget, int
         }
 
         chosen.insert(index);
+        brokeCount = 0;
         totalCost += sensors[index].cost;
     }
     return vector<int>(chosen.begin(), chosen.end());
@@ -256,7 +257,7 @@ vector<int> weightedAlgorithm(vector<Sensor> &sensors, int budget, int R)
             //cout << sensors[index_maxweight].cost << ' ' << maxweight << ' ' << sensors[index_maxweight].coverage << '\n';
             chosen.set(index_maxweight, true);
             covered |= coverSets[index_maxweight];
-            
+
             covered.set(index_maxweight, true);
             totalCost += sensors[index_maxweight].cost;
         }

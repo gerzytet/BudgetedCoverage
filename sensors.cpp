@@ -104,6 +104,36 @@ struct RoundResult : TrialResult {
     RoundResult (TrialResult result, int num_participants) : TrialResult(result), num_participants(num_participants) {}
 };
 
+struct MultiRoundResult {
+    vector<RoundResult> rounds;
+
+    float getAverageParticipation() {
+        int total_participants = 0;
+        for (RoundResult r : rounds) {
+            total_participants += r.num_participants;
+        }
+        return (float) total_participants / rounds.size();
+    }
+
+    float getAverageCoverage() {
+        int total_coverage = 0;
+        for (RoundResult r : rounds) {
+            total_coverage += r.coverage;
+        }
+        return (float) total_coverage / rounds.size();
+    }
+
+    float getAverageSpending() {
+        int total_spending = 0;
+        for (RoundResult r : rounds) {
+            total_spending += r.totalCost;
+        }
+        return (float) total_spending / rounds.size();
+    }
+
+    MultiRoundResult(vector<RoundResult> rounds) : rounds(rounds) {};
+};
+
 enum AlgorithmType {
     GREEDY_ALG_TYPE = 1, RANDOM_ALG_TYPE = 2, BETTER_GREEDY_ALG_TYPE = 3, DYNAMIC_ALG_TYPE = 4, BRUTE_FORCE_ALG_TYPE = 5, K_GREEDY_ALG_TYPE = 6
 };
@@ -292,6 +322,17 @@ RoundResult runRound(AlgorithmInfo algorithmInfo, vector<Sensor> &sensors, int R
     postRoundActions(sensors, result);
     return RoundResult(result, num_participants);
 }
+
+MultiRoundResult runMultiRound(AlgorithmInfo algorithmInfo, const vector<Sensor> &sensors, int R, int budget, int num_rounds, string logname = "") {
+    vector<RoundResult> rounds;
+    vector<Sensor> sensorsCopy = sensors;
+    for (int i = 0; i < num_rounds; i++) {
+        RoundResult result = runRound(algorithmInfo, sensorsCopy, R, budget, logname + "_round" + to_string(i));
+        rounds.push_back(result);
+    }
+    return MultiRoundResult(rounds);
+}
+
 
 void experiment() {
     ofstream output;
@@ -636,6 +677,67 @@ void experiment4(int budget, int radius, int starttrial, int endtrial) {
     //}
 }
 
+void experiment4_full() {
+    ofstream output;
+
+    output.open("experiment4_full.csv");
+    int radius = 5;
+    for (int budget = 100; budget <= 2000; budget+=100) {
+        for (int trial = 0; trial < 100; trial++) {
+            for (DistributionType distribution : {CLUSTERED, RANDOM, EXPONENTIAL}) {
+                //string name = to_string(budget) + "_" + to_string(radius) + "_" + to_string(starttrial) + "_" + to_string(endtrial) + ".csv";
+                //output << "algorithm,budget,coverage,cost per coverage unit,time\n";
+                const int R = radius;
+
+                auto printTrial = [&](string name, TrialResult result, int budget) {
+                    output << name << ',';
+                    output << budget << ',';
+                    output << result.coverage << ',';
+                    double coveragePerDollar = ((double)result.totalCost / result.coverage);
+                    output << coveragePerDollar << ',';
+                    output << distribution << ',';
+                    output << radius << ',';
+                    output << result.ms << endl;
+                };
+
+                vector<Sensor> sensors = generateSensors(distribution, 100, trial);
+                printTrial("greedy", runTrial(
+                    BETTER_GREEDY_ALG,
+                    sensors,
+                    R,
+                    budget
+                ), budget);
+                printTrial("random", runTrial(
+                    RANDOM_ALG,
+                    sensors,
+                    R,
+                    budget
+                ), budget);
+                printTrial("bad_greedy", runTrial(
+                    GREEDY_ALG,
+                    sensors,
+                    R,
+                    budget
+                ), budget);
+                printTrial("k=1", runTrial(
+                    AlgorithmInfo(K_GREEDY_ALG_TYPE, 1),
+                    sensors,
+                    R,
+                    budget
+                ), budget);
+                printTrial("k=2", runTrial(
+                    AlgorithmInfo(K_GREEDY_ALG_TYPE, 2),
+                    sensors,
+                    R,
+                    budget
+                ), budget);
+
+                cout << "Budget " << budget << " Trial " << trial+1 << " dist " << (int)distribution << "\n";
+            }
+        }
+    }
+}
+
 void experiment4RemoteLoop() {
     while (true) {
         cout << "Getting batch...\n";
@@ -703,13 +805,51 @@ void testRounds() {
     }
 }
 
+void testMultiRounds() {
+    ofstream output("multi_round_output.txt");
+    for (int budget = 100; budget <= 3000; budget+=100) {
+        vector<Sensor> sensors = generateSensors(CLUSTERED, 100, 0);
+
+        auto result = runMultiRound(
+            BETTER_GREEDY_ALG,
+            vector<Sensor>(sensors),
+            5,
+            budget,
+            100,
+            "budget_" + to_string(budget)
+        );
+        output << "greedy" << ' ' << budget << ' ' << result.getAverageParticipation() << ' ' << result.getAverageCoverage() << ' ' << result.getAverageSpending() << '\n';
+
+        result = runMultiRound(
+            GREEDY_ALG,
+            vector<Sensor>(sensors),
+            5,
+            budget,
+            100,
+            "budget_" + to_string(budget)
+        );
+        output << "bad_greedy" << ' ' << budget << ' ' << result.getAverageParticipation() << ' ' << result.getAverageCoverage() << ' ' << result.getAverageSpending() << '\n';
+
+        result = runMultiRound(
+            RANDOM_ALG,
+            vector<Sensor>(sensors),
+            5,
+            budget,
+            100,
+            "budget_" + to_string(budget)
+        );
+        output << "random" << ' ' << budget << ' ' << result.getAverageParticipation() << ' ' << result.getAverageCoverage() << ' ' << result.getAverageSpending() << '\n';
+
+    }
+}
+
 int main()
 {
     //experiment4();
     /*for (int i = 0; i < 20; i++) {
         cout << randnormal(50, 20) << '\n';
     }*/
-    testRounds();
+    experiment4_full();
     //for (int x : getNextBatch()) {
     //    cout << x << '\n';
     //}
