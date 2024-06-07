@@ -31,27 +31,23 @@ vector<bs> calculateCoverageSets(const vector<Sensor> &sensors, int R) {
 
 vector<int> chooseSensorsRandomly(const vector<Sensor> &sensors, int budget, int R)
 {
-    int totalCost = 0;
     set<int> chosen;
     int brokeCount = 0;
 
     while(chosen.size() < sensors.size() && brokeCount < 40)
     {
-        int index = randint(0, sensors.size() - 1);
-        while (chosen.count(index) != 0)
-        {
-            index = randint(0, sensors.size() - 1);
+        vector<int> affordable;
+        for (int i = 0; i < sensors.size(); i++) {
+            if (sensors[i].cost <= budget && chosen.count(i) == 0) {
+                affordable.push_back(i);
+            }
         }
-
-        if((totalCost + sensors[index].cost) > budget)
-        {
-            brokeCount++;
-            continue;
+        if (affordable.size() == 0) {
+            break;
         }
-
-        chosen.insert(index);
-        brokeCount = 0;
-        totalCost += sensors[index].cost;
+        int index = randint(0, affordable.size() - 1);
+        chosen.insert(affordable[index]);
+        budget -= sensors[affordable[index]].cost;
     }
     return vector<int>(chosen.begin(), chosen.end());
 }

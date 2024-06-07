@@ -1,1 +1,1 @@
-python3 ./generate_trajectories.py 100
+python3 ./generate_trajectories.py $1 $2

@@ -1,12 +1,12 @@
 from collections import defaultdict
 import math
-from random import choice
+from random import choice, seed
 import time
 import traci
 import sys
 sumoBinary = "sumo"
 sumoCmd = [sumoBinary, "-c", "london-seg4.100.sumocfg"]
-sumoCmd += ["--no-warnings", "true"]
+sumoCmd += ["--no-warnings", "true", "--quit-on-end"]
 
 
 
@@ -22,9 +22,14 @@ def getRandomRoute():
         break
     return [f, t]
 
-if len(sys.argv) != 2:
+if len(sys.argv) < 2:
     print("No number of participants specified")
     sys.exit(1)
+if len(sys.argv) > 3:
+    print("Too many arguments")
+    sys.exit(1)
+if len(sys.argv) == 3:
+    seed(int(sys.argv[2]))
 num_vehicles = int(sys.argv[1])
 vehicle_route_endpoints = {}
 

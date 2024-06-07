@@ -300,8 +300,6 @@ void postRoundActions(vector<Sensor> &sensors, TrialResult result) {
             }
         }
     }
-
-    moveParticicpants(RANDOM_MOVEMENT, sensors);
 }
 
 RoundResult runRound(AlgorithmInfo algorithmInfo, vector<Sensor> &sensors, int R, int budget, string logname = "") {
@@ -323,16 +321,16 @@ RoundResult runRound(AlgorithmInfo algorithmInfo, vector<Sensor> &sensors, int R
     return RoundResult(result, num_participants);
 }
 
-MultiRoundResult runMultiRound(AlgorithmInfo algorithmInfo, const vector<Sensor> &sensors, int R, int budget, int num_rounds, string logname = "") {
+MultiRoundResult runMultiRound(AlgorithmInfo algorithmInfo, const vector<Sensor> &sensors, int R, int budget, int num_rounds, Trajectories trajectories, int seed, string logname = "") {
     vector<RoundResult> rounds;
     vector<Sensor> sensorsCopy = sensors;
     for (int i = 0; i < num_rounds; i++) {
         RoundResult result = runRound(algorithmInfo, sensorsCopy, R, budget, logname + "_round" + to_string(i));
+        moveAlongTrajectories(sensorsCopy, trajectories, i);
         rounds.push_back(result);
     }
     return MultiRoundResult(rounds);
 }
-
 
 void experiment() {
     ofstream output;
@@ -756,10 +754,11 @@ void experiment4RemoteLoop() {
 void testRandomMovement() {
         cout << "HERE\n";
     vector<Sensor> sensors = generateSensors(CLUSTERED, 100, 0);
+    Trajectories t = generateRandomTrajectories(sensors, 100);
     cout << "HERE\n";
     for (int i = 0; i < 100; i++) {
         auto trial = runTrial(RANDOM_ALG, sensors, 5, 100, "random_movement_" + to_string(i));
-        moveParticicpants(RANDOM_MOVEMENT, sensors);
+        moveAlongTrajectories(sensors, t, i);
         cout << sensors[0].x  << " " << sensors[0].y << '\n';
     }
 }
@@ -807,49 +806,70 @@ void testRounds() {
 
 void testMultiRounds() {
     ofstream output("multi_round_output.txt");
-    for (int budget = 100; budget <= 3000; budget+=100) {
-        vector<Sensor> sensors = generateSensors(CLUSTERED, 100, 0);
+    for (int trial = 0; trial < 10; trial++) {
+        for (int budget = 100; budget <= 3000; budget+=100) {
+            vector<Sensor> sensors = generateSensors(CLUSTERED, 100, 0);
+            Trajectories sumoTrajectories = generateSumoTrajectories(100, 100, budget);
 
-        auto result = runMultiRound(
-            BETTER_GREEDY_ALG,
-            vector<Sensor>(sensors),
-            5,
-            budget,
-            100,
-            "budget_" + to_string(budget)
-        );
-        output << "greedy" << ' ' << budget << ' ' << result.getAverageParticipation() << ' ' << result.getAverageCoverage() << ' ' << result.getAverageSpending() << '\n';
+            auto result = runMultiRound(
+                BETTER_GREEDY_ALG,
+                vector<Sensor>(sensors),
+                5,
+                budget,
+                100,
+                sumoTrajectories,
+                budget,
+                "budget_" + to_string(budget)
+            );
+            output << "greedy" << ' ' << budget << ' ' << result.getAverageParticipation() << ' ' << result.getAverageCoverage() << ' ' << result.getAverageSpending() << '\n';
 
-        result = runMultiRound(
-            GREEDY_ALG,
-            vector<Sensor>(sensors),
-            5,
-            budget,
-            100,
-            "budget_" + to_string(budget)
-        );
-        output << "bad_greedy" << ' ' << budget << ' ' << result.getAverageParticipation() << ' ' << result.getAverageCoverage() << ' ' << result.getAverageSpending() << '\n';
+            result = runMultiRound(
+                GREEDY_ALG,
+                vector<Sensor>(sensors),
+                5,
+                budget,
+                100,
+                sumoTrajectories,
+                budget,
+                "budget_" + to_string(budget)
+            );
+            output << "bad_greedy" << ' ' << budget << ' ' << result.getAverageParticipation() << ' ' << result.getAverageCoverage() << ' ' << result.getAverageSpending() << '\n';
 
-        result = runMultiRound(
-            RANDOM_ALG,
-            vector<Sensor>(sensors),
-            5,
-            budget,
-            100,
-            "budget_" + to_string(budget)
-        );
-        output << "random" << ' ' << budget << ' ' << result.getAverageParticipation() << ' ' << result.getAverageCoverage() << ' ' << result.getAverageSpending() << '\n';
+            result = runMultiRound(
+                RANDOM_ALG,
+                vector<Sensor>(sensors),
+                5,
+                budget,
+                100,
+                sumoTrajectories,
+                budget,
+                "budget_" + to_string(budget)
+            );
+            output << "random" << ' ' << budget << ' ' << result.getAverageParticipation() << ' ' << result.getAverageCoverage() << ' ' << result.getAverageSpending() << '\n';
 
+
+            result = runMultiRound(
+                AlgorithmInfo(K_GREEDY_ALG_TYPE, 1),
+                vector<Sensor>(sensors),
+                5,
+                budget,
+                100,
+                sumoTrajectories,
+                budget,
+                "budget_" + to_string(budget)
+            );
+            output << "k=1" << ' ' << budget << ' ' << result.getAverageParticipation() << ' ' << result.getAverageCoverage() << ' ' << result.getAverageSpending() << '\n';
+        }
     }
 }
 
 int main()
 {
+    testMultiRounds();
     //experiment4();
     /*for (int i = 0; i < 20; i++) {
         cout << randnormal(50, 20) << '\n';
     }*/
-    experiment4_full();
     //for (int x : getNextBatch()) {
     //    cout << x << '\n';
     //}
